@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Socket.IO + Tailwind</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  </head>
+  <body
+    class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-6"
+  >
+    <p class="text-3xl font-bold mb-4 text-blue-600">
+      Socket.IO Real-time Test
+    </p>
+
+    <div class="flex justify-between items-center">
+      <input
+        type="text"
+        id="messageInput"
+        placeholder="Type your message here..."
+        class="border border-gray-300 rounded px-4 py-2 w-full max-w-md mr-2"
+      />
+      <button
+        id="sendBtn"
+        class="bg-blue-500 text-nowrap hover:bg-blue-600 text-white px-4 py-2 rounded shadow"
+      >
+        Send Message to Server
+      </button>
+    </div>
+
+    <div
+      id="log"
+      class="mt-6 w-full max-w-xl bg-white rounded shadow p-4 text-sm overflow-y-auto h-64"
+    >
+      <p class="text-gray-500">Waiting for messages...</p>
+    </div>
+
+    <script>
+      const socket = io('http://localhost:5000',{
+        query:{
+            token:"1234567890"
+        }
+      });
+      const log = document.getElementById('log');
+      const messageInput = document.getElementById('messageInput');
+      console.log("DOM: ", document);
+      console.log("Socket: ", socket);
+
+
+      function logMessage(msg) {
+        const p = document.createElement('p');
+        p.textContent = msg;
+        log.appendChild(p);
+      }
+
+      socket.on('connect', () => {
+        logMessage(' Connected to server');
+        socket.emit('message', 'Hello from browser!');
+        socket.emit("join", "Join the chat room!");
+      });
+
+      socket.on('welcome', (data) => {
+        logMessage(' Server says: ' + data);
+      });
+
+      socket.on('new-message', (data) => {
+        logMessage(' Broadcast: ' + data);
+      });
+
+      document.getElementById('sendBtn').addEventListener('click', () => {
+        socket.emit('message', messageInput.value);
+        logMessage(' Sent: ' + messageInput.value);
+      });
+    </script>
+  </body>
+</html>
