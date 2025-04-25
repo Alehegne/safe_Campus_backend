@@ -1,37 +1,120 @@
-const app = require("./src/app");
-const connectToDatabase = require("./src/config/dbConnection");
-require("dotenv").config();
-const cors = require("cors"); //
-const { createServer } = require("http");
-const { Server } = require("socket.io"); //importing socket.io
-const getSocketConfig = require("./src/config/socket.config");
-const getCorsConfig = require("./src/config/cors.config"); //importing cors config
-const initSocket = require("./src/sockets/index"); //importing socket.io config
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
 
-app.use(cors(getCorsConfig())); //using cors middleware with the config
+const app = express();
+const connectToDatabase = require('./src/config/dbConnection');
+const getSocketConfig = require('./src/config/socket.config');
+const getCorsConfig = require('./src/config/cors.config');
+const initSocket = require('./src/sockets/index');
+const User = require('./src/models/User');
+const authRoutes = require('./src/routes/authRoutes');
 
-//http server, passing the express app to it, so it can handle requests
+app.use(cors(getCorsConfig()));
+app.use(express.json());
+app.use('/api/auth', authRoutes);
+
+connectToDatabase();
+
 const server = createServer(app);
-//initializing socket.io server, passing the http server to it
-connectToDatabase(); //connecting to the database
 const io = new Server(server, getSocketConfig());
 
-// Connection-level middleware
-// io.use((socket, next) => {
-//   console.log("socket handShake:", socket.handshake); // Log the handshake object for debugging
-//   const token = socket.handshake.query.token; // Get token from handshake
-//   console.log("token:", token); // Log the token for debugging
-//   if (token === "1234567890") {
-//     return next(); // Allow connection
-//   }
-//   console.log("error:");
-//   return next(new Error("Authentication failed")); // Reject connection
-// });
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth.token || socket.handshake.query.token;
+    if (!token) return next(new Error('Authentication error'));
 
-//initializing socket.io with the server
-initSocket(io); //initializing socket.io with the server
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId).select('-password');
+    if (!user) return next(new Error('User not found'));
 
-const PORT = process.env.PORT || 5000;
+    socket.user = user;
+    next();
+  } catch (error) {
+    next(new Error('Authentication failed'));
+  }
+});
+
+initSocket(io);
+
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { campusId, email, password } = req.body;
+
+    if (!campusId || !email || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const existingUser = await User.findOne({ $or: [{ email }, { campusId }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    const user = await User.create({ campusId, email, password });
+    res.status(201).json({
+      _id: user._id,
+      campusId: user.campusId,
+      email: user.email,
+      role: user.role
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password required' });
+    }
+
+    const user = await User.findOne({ email }).select('+password');
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    res.json({
+      token,
+      user: {
+        _id: user._id,
+        campusId: user.campusId,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/protected', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ message: 'Forbidden' });
+    res.json({ message: 'Protected data', user: decoded });
+  });
+});
+
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
