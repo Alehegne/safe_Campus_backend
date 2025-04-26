@@ -210,11 +210,101 @@ async function getSharedRoute(req, res) {
   }
 }
 
+// Get all routes for a user
+async function getAllUserRoutes(req, res) {
+  try {
+    const { user } = req;
+    if (!user) {
+      return sendResponse(res, 401, false, "Unauthorized", null);
+    }
+
+    const { status } = req.query;
+    const query = { userId: user.userId };
+    
+    // Filter by status if provided
+    if (status) {
+      query.status = status;
+    }
+
+    const routes = await Route.find(query)
+      .sort({ startTime: -1 }) // Most recent first
+      .select('-locationPoints'); // Exclude location points for list view
+
+    sendResponse(res, 200, true, "Routes retrieved successfully", routes);
+  } catch (error) {
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
+
+// Update route details
+async function updateRouteDetails(req, res) {
+  try {
+    const { user } = req;
+    if (!user) {
+      return sendResponse(res, 401, false, "Unauthorized", null);
+    }
+
+    const { routeId } = req.params;
+    const { description } = req.body;
+
+    const route = await Route.findOne({ _id: routeId, userId: user.userId });
+    if (!route) {
+      return sendResponse(res, 404, false, "Route not found", null);
+    }
+
+    if (route.status === "ended") {
+      return sendResponse(res, 400, false, "Cannot update ended route", null);
+    }
+
+    route.description = description;
+    await route.save();
+
+    sendResponse(res, 200, true, "Route updated successfully", route);
+  } catch (error) {
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
+
+// Pause route
+async function pauseRoute(req, res) {
+  try {
+    const { user } = req;
+    if (!user) {
+      return sendResponse(res, 401, false, "Unauthorized", null);
+    }
+
+    const { routeId } = req.params;
+    const route = await Route.findOne({ _id: routeId, userId: user.userId });
+    
+    if (!route) {
+      return sendResponse(res, 404, false, "Route not found", null);
+    }
+
+    if (route.status === "ended") {
+      return sendResponse(res, 400, false, "Cannot pause ended route", null);
+    }
+
+    if (route.status === "paused") {
+      return sendResponse(res, 400, false, "Route is already paused", null);
+    }
+
+    route.status = "paused";
+    await route.save();
+
+    sendResponse(res, 200, true, "Route paused successfully", route);
+  } catch (error) {
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
+
 module.exports = {
   startRoute,
   stopRoute,
   updateRouteLocation,
   getRouteStatus,
   shareRoute,
-  getSharedRoute
+  getSharedRoute,
+  getAllUserRoutes,
+  updateRouteDetails,
+  pauseRoute
 }; 
