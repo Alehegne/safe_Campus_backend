@@ -14,23 +14,35 @@ async function startRoute(req, res) {
       return sendResponse(res, 400, false, "Start location is required", null);
     }
 
+    // Ensure coordinates are pure numbers in [longitude, latitude] order
+    const coordinates = [
+      parseFloat(startLocation.coordinates[0]),
+      parseFloat(startLocation.coordinates[1])
+    ];
+
+    if (isNaN(coordinates[0]) || isNaN(coordinates[1])) {
+      return sendResponse(res, 400, false, "Invalid coordinates format", null);
+    }
+
     const newRoute = new Route({
       userId: user.userId,
       startLocation: {
         type: "Point",
-        coordinates: startLocation.coordinates,
-        timestamp: new Date()
+        coordinates: coordinates
       },
       description,
       status: "started",
       locationPoints: [{
-        type: "Point",
-        coordinates: startLocation.coordinates,
+        location: {
+          type: "Point",
+          coordinates: coordinates
+        },
         timestamp: new Date()
       }]
     });
 
     await newRoute.save();
+    
     sendResponse(res, 201, true, "Route started successfully", newRoute);
   } catch (error) {
     sendResponse(res, 500, false, "Server error", null, error.message);
@@ -61,14 +73,18 @@ async function stopRoute(req, res) {
     route.endTime = new Date();
     
     if (endLocation && endLocation.coordinates) {
+      // set the route's endLocation
       route.endLocation = {
         type: "Point",
-        coordinates: endLocation.coordinates,
-        timestamp: new Date()
+        coordinates: endLocation.coordinates
       };
+
+      
       route.locationPoints.push({
-        type: "Point",
-        coordinates: endLocation.coordinates,
+        location: {
+          type: "Point",
+          coordinates: endLocation.coordinates
+        },
         timestamp: new Date()
       });
     }
@@ -104,16 +120,27 @@ async function updateRouteLocation(req, res) {
       return sendResponse(res, 400, false, "Cannot update location of ended route", null);
     }
 
-    const locationPoint = {
-      type: "Point",
-      coordinates,
+    // Ensure coordinates are pure numbers in [longitude, latitude] order
+    const locationCoordinates = [
+      parseFloat(coordinates[0]),
+      parseFloat(coordinates[1])
+    ];
+
+    if (isNaN(locationCoordinates[0]) || isNaN(locationCoordinates[1])) {
+      return sendResponse(res, 400, false, "Invalid coordinates format", null);
+    }
+
+    // Always push under the location key
+    route.locationPoints.push({
+      location: {
+        type: "Point",
+        coordinates: locationCoordinates
+      },
       timestamp: new Date()
-    };
+    });
 
-    route.locationPoints.push(locationPoint);
     await route.save();
-
-    sendResponse(res, 200, true, "Route location updated successfully", { locationPoint });
+    sendResponse(res, 200, true, "Location updated successfully", route);
   } catch (error) {
     sendResponse(res, 500, false, "Server error", null, error.message);
   }

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
-const locationPointSchema = new mongoose.Schema({
+// Pure GeoJSON Point schema without metadata
+const geoJSONPointSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ["Point"],
@@ -8,14 +9,30 @@ const locationPointSchema = new mongoose.Schema({
     default: "Point"
   },
   coordinates: {
-    type: [Number], //[longitude, latitude]
+    type: [Number],
+    required: true,
+    validate: {
+      validator: function(v) {
+        return v.length === 2 && 
+               typeof v[0] === "number" && 
+               typeof v[1] === "number";
+      },
+      message: "Coordinates must be an array of two numbers [longitude, latitude]"
+    }
+  }
+}, { _id: false });  // Disable _id generation for GeoJSON objects
+
+// Location point with timestamp (for locationPoints array)
+const trackedPointSchema = new mongoose.Schema({
+  location: {
+    type: geoJSONPointSchema,
     required: true
   },
   timestamp: {
     type: Date,
     default: Date.now
   }
-});
+}, { _id: false });
 
 const routeSchema = new mongoose.Schema(
   {
@@ -25,19 +42,19 @@ const routeSchema = new mongoose.Schema(
       required: true
     },
     startLocation: {
-      type: locationPointSchema,
+      type: geoJSONPointSchema,
       required: true
     },
     endLocation: {
-      type: locationPointSchema,
-      required: false // Not required initially as user might not know end location
+      type: geoJSONPointSchema,
+      required: false
     },
     status: {
       type: String,
       enum: ["started", "paused", "ended", "emergency"],
       default: "started"
     },
-    locationPoints: [locationPointSchema],
+    locationPoints: [trackedPointSchema],
     sharedWith: [{
       userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -63,12 +80,12 @@ const routeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index for geospatial queries on start and end locations
+// GeoJSON indexes for location-based queries
 routeSchema.index({ "startLocation": "2dsphere" });
 routeSchema.index({ "endLocation": "2dsphere" });
-routeSchema.index({ "locationPoints": "2dsphere" });
+routeSchema.index({ "locationPoints.location": "2dsphere" });
 
-// Index for querying routes by user
+// Index for user's route history
 routeSchema.index({ userId: 1, startTime: -1 });
 
-module.exports = mongoose.model("Route", routeSchema); 
+module.exports = mongoose.model("Route", routeSchema);

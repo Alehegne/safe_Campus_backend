@@ -9,7 +9,6 @@ const { generateJwtToken, comparePassword } = require("../utils/helper");
 
 async function registerUser(req, res) {
   try {
-    console.log("registering user:", req.body);
     if (!req.body) {
       sendResponse(res, 400, true, "please provide registration information");
     }
@@ -19,7 +18,7 @@ async function registerUser(req, res) {
     if (!success) {
       return sendResponse(res, 400, false, message);
     }
-    // Check if user already exists
+
     const existingUser = await getByEmailOrStudentId(email, studentId);
     if (existingUser) {
       return sendResponse(
@@ -30,12 +29,11 @@ async function registerUser(req, res) {
       );
     }
 
-    // Create new user
     const newUser = await saveUser(req.body);
     if (!newUser) {
       return sendResponse(res, 400, false, "User registration failed");
     }
-    // Send success response
+
     sendResponse(res, 201, true, "User registered successfully", {
       _id: newUser._id,
       studentId: newUser?.studentId,
@@ -44,7 +42,7 @@ async function registerUser(req, res) {
     });
   } catch (error) {
     console.error("Register error:", error);
-    res.status(500).json({ message: "Server error" });
+    sendResponse(res, 500, false, "Server error", null, error.message);
   }
 }
 
