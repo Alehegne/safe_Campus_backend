@@ -16,9 +16,21 @@ function decodeJwtToken(token) {
     return decoded;
   });
 }
+function decodeToken(token, secret) {
+  return jwt.verify(token, secret, (err, decoded) => {
+    if (err) return null;
+    return decoded;
+  });
+}
+
+function getGoogleMapURL(lat, lng) {
+  return `https://maps.google.com/?q=${lat},${lng}`;
+}
 
 module.exports = {
   generateJwtToken,
   comparePassword,
   decodeJwtToken,
+  getGoogleMapURL,
+  decodeToken,
 };

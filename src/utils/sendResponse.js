@@ -6,7 +6,7 @@ function sendResponse(
   data = null,
   error = null
 ) {
-  res.status(statusCode).json({
+  return res.status(statusCode).json({
     success,
     message,
     data,

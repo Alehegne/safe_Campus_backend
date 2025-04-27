@@ -2,16 +2,16 @@ const express = require("express");
 const app = express();
 const authRoutes = require("./routes/auth.route");
 const profileRoutes = require("./routes/profile.route");
-// const authMiddleware = require("./middleware/auth");
-// const rolesMiddleware = require("./middleware/roles");
+const sosRoutes = require("./routes/panicAlert.route");
+const sendResponse = require("./utils/sendResponse");
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/sos", sosRoutes);
 
 app.get("/", (req, res) => {
   console.log("welcome to safecampus");
-  res.status(200).json({
-    success: true,
+  sendResponse(res, 200, true, "welcome to safecampus", {
     message: "welcome to safecampus",
   });
 });
@@ -24,11 +24,9 @@ app.use((req, res, next) => {
 });
 
 app.use((error, req, res) => {
-  res.status(error.status || 500);
-  res.json({
-    error: {
-      message: error.message,
-    },
+  sendResponse(res, error.status || 500, false, error.message, {
+    error: error.message,
+    stack: process.env.NODE_ENV === "production" ? null : error.stack,
   });
 });
 

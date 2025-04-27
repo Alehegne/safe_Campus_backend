@@ -10,9 +10,19 @@ const { generateJwtToken, comparePassword } = require("../utils/helper");
 async function registerUser(req, res) {
   try {
     console.log("registering user:", req.body);
-    if (!req.body) {
+    if (!req.body || req.body.length === 0) {
       sendResponse(res, 400, true, "please provide registration information");
     }
+    //only register students
+    // if (req.body.role === "admin" || req.body.role === "campus_security") {
+    //   return sendResponse(
+    //     res,
+    //     400,
+    //     false,
+    //     "admin and campus security cannot register here!"
+    //   );
+    // }
+
     const { studentId, email } = req.body;
 
     const { success, message } = validateUser(req.body);
@@ -20,8 +30,16 @@ async function registerUser(req, res) {
       return sendResponse(res, 400, false, message);
     }
     // Check if user already exists
-    const existingUser = await getByEmailOrStudentId(email, studentId);
-    if (existingUser) {
+    let existingUser = [];
+    if (req.body.role === "student") {
+      console.log("std:");
+      existingUser = await getByEmailOrStudentId(email, studentId);
+    } else {
+      existingUser = await findWithEmail(email);
+    }
+    console.log("fine...");
+    console.log("existingUser:", existingUser);
+    if (!existingUser.length === 0) {
       return sendResponse(
         res,
         400,
@@ -29,6 +47,7 @@ async function registerUser(req, res) {
         "User with this email or student id already exists."
       );
     }
+    console.log("finno...");
 
     // Create new user
     const newUser = await saveUser(req.body);
@@ -60,7 +79,7 @@ async function logInUser(req, res) {
 
     //
     const existing = await findWithEmail(email);
-    console.log("exin:", existing);
+
     if (!existing || existing.length === 0) {
       return sendResponse(res, 401, "please register first");
     }
@@ -80,18 +99,22 @@ async function logInUser(req, res) {
       userId: existing[0]._id,
       role: existing[0].role,
       studentId: existing[0].studentId,
+      email: existing[0].email,
     };
     const token = generateJwtToken(payload);
     if (!token) {
       return sendResponse(res, 401, false, "Invalid credentials");
     }
+    //filter
+    const filteredUser = existing[0].toObject();
+    delete filteredUser.password;
+    delete filteredUser.__v;
+    console.log("filteredUser:", filteredUser);
+
     sendResponse(res, 200, true, "Login successful", {
       token,
       user: {
-        _id: existing._id,
-        studentId: existing.studentId,
-        email: existing.email,
-        role: existing.role,
+        ...filteredUser,
       },
     });
   } catch (error) {

@@ -13,6 +13,12 @@ const userSchema = new mongoose.Schema(
         message: "Student ID is required for students",
       },
     },
+    deviceToken: {
+      // for push notifications using firebase cloud messaging
+      type: String,
+      trim: true,
+      required: true,
+    },
     fullName: {
       type: String,
       trim: true,
