@@ -1,5 +1,15 @@
 const sendResponse = require("../utils/sendResponse");
-const { sendPanic, savePanicEvent } = require("../services/panicAlert.service");
+const {
+  sendPanic,
+  savePanicEvent,
+  getAllEvents,
+  getAllEventByUserId,
+  updateAcknowledgedFromEmail,
+  emailTracker,
+  updateResolvedEvents,
+  updateNotified,
+  updateAcknowledgedBy,
+} = require("../services/panicAlert.service");
 const { decodeToken, getGoogleMapURL } = require("../utils/helper");
 const PanicEvent = require("../models/panicEvent.model");
 async function triggerPanicEvent(req, res) {
@@ -45,27 +55,15 @@ async function triggerPanicEvent(req, res) {
 }
 async function getAllPanicEvents(req, res) {
   try {
-    const { page = 1, limit = 20 } = req.query;
-    const skip = (page - 1) * limit;
-    const panicEvents = await PanicEvent.find()
-      .populate("userId", "name email")
-      .populate("resolvedBy", "name email")
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 });
-    const totalPanicEvents = await PanicEvent.countDocuments();
-    const totalPages = Math.ceil(totalPanicEvents / limit);
-    const analysis = {
-      totalPanicEvents,
-      totalPages,
-      currentPage: page,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    };
+    const response = await getAllEvents(req.query);
 
+    const { events, analysis } = response;
+    if (!events) {
+      return sendResponse(res, 401, false, "failed to get panic events!");
+    }
     return sendResponse(res, 200, true, "success", {
       message: "Panic events retrieved successfully.",
-      data: panicEvents,
+      data: events,
       analysis: analysis,
     });
   } catch (error) {
@@ -76,25 +74,13 @@ async function getAllPanicEvents(req, res) {
 async function getAllPanicByUserId(req, res) {
   try {
     const { user } = req;
-    const { page = 1, limit = 20 } = req.query;
-    const skip = (page - 1) * limit;
-    const panicEvents = await PanicEvent.find({ userId: user.userId })
-      .populate("userId", "name email")
-      .populate("resolvedBy", "name email")
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 });
-    const totalPanicEvents = await PanicEvent.countDocuments({
-      userId: user.userId,
-    });
-    const totalPages = Math.ceil(totalPanicEvents / limit);
-    const analysis = {
-      totalPanicEvents,
-      totalPages,
-      currentPage: page,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    };
+    const { panicEvents, analysis } = await getAllEventByUserId(
+      user,
+      req.query
+    );
+    if (!panicEvents) {
+      return sendResponse(res, 401, false, "failed to get panic events!");
+    }
     return sendResponse(res, 200, true, "success", {
       message: "Panic events retrieved successfully.",
       data: panicEvents,
@@ -112,55 +98,14 @@ async function responseHandler(req, res) {
     const secret = process.env.RESPONSE_TOKEN_SECRET;
     const decodedToken = decodeToken(token, secret);
 
-    if (!decodedToken || decodedToken.type !== "response") {
-      return sendResponse(res, 401, false, "invalid token!");
-    }
-    console.log("decoded token:", decodedToken);
-    const { email, response, eventId, role } = decodedToken;
-    if (!email || !response || !eventId || !role) {
-      return res.redirect(process.env.GMAIL_REDIRECT_URL);
-    }
-    //update the panic event with the response
-    const updated = {
-      acknowledgedBy: {
-        userId: decodedToken?.userId,
-        notifiedAt: new Date(),
-        response: response,
-        name: decodedToken.name,
-        email: decodedToken?.email,
-      },
-    };
+    const { success, message } = updateAcknowledgedFromEmail(decodedToken);
 
-    const updatedPanicEvent = await PanicEvent.findOneAndUpdate(
-      {
-        _id: eventId,
-        acknowledgedBy: {
-          $not: {
-            $elemMatch: { email: decodedToken?.email, response: response },
-          },
-        },
-      },
-      { $push: updated },
-      { new: true }
-    );
-    console.log("fine:");
-    console.log("updated panic event:", updatedPanicEvent);
-    let panicEventData = updatedPanicEvent;
-    if (!updatedPanicEvent) {
-      panicEventData = await PanicEvent.findById(eventId);
-      if (!panicEventData) {
-        return res.redirect(process.env.GMAIL_REDIRECT_URL);
-      }
+    if (!success) {
+      return res.send(message);
     }
 
-    const mapUrl = getGoogleMapURL(
-      panicEventData.location.coordinates[1],
-      panicEventData.location.coordinates[0]
-    );
-    console.log("updated panic event:", updatedPanicEvent);
-    //if the req is from gmail, redirect
     res.redirect(
-      `${process.env.GMAIL_REDIRECT_URL}?response=${response}&victim=${decodedToken.name}$mapUrl=${mapUrl}`
+      `${process.env.GMAIL_REDIRECT_URL}?response=${decodeToken.response}&victim=${decodedToken.name}$mapUrl=${message}`
     );
   } catch (error) {
     console.error("Error handling response:", error);
@@ -175,42 +120,11 @@ async function emailViewTracker(req, res) {
     const secret = process.env.TRACKING_TOKEN_SECRET;
     const decodeToken = decodeToken(token, secret);
     console.log("decoded token:", decodeToken);
-    if (!decodeToken || decodeToken.type !== "emailOpen") {
-      return res.send("invalid tracking link!");
-    }
-    const { eventId, role = "contact" } = decodeToken;
-    if (!eventId || !role) {
-      return res.send("invalid tracking link!");
+    const { success, message } = emailTracker(decodeToken);
+    if (!success) {
+      return res.send(message);
     }
 
-    //update the panic notification with the response
-    const updated = {
-      notifications: {
-        type: role,
-        name: decodeToken?.name,
-        email: decodeToken?.email,
-        notifiedAt: new Date(),
-      },
-    };
-
-    //update the panic event with the response
-    const updatedPanicEvent = await PanicEvent.findOneAndUpdate(
-      {
-        _id: eventId,
-        notifications: {
-          $not: {
-            $elemMatch: { email: decodeToken?.email, type: role },
-          },
-        },
-      },
-      { $push: updated },
-      { new: true }
-    );
-
-    if (!updatedPanicEvent) {
-      return res.send("invalid tracking link!");
-    }
-    console.log("updated panic event:", updatedPanicEvent);
     //send the response to the image href
     const img = Buffer.from(
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/gbLbfsAAAAASUVORK5CYII=",
@@ -234,24 +148,13 @@ async function resolvedPanicEvent(req, res) {
     //toggle the resolved status of the panic event,
     //and update the resolvedBy field with the userId of the user who resolved it
 
-    const panicEvent = await PanicEvent.findById(eventId);
-    if (!panicEvent) {
-      return sendResponse(res, 401, false, "panic event not found!");
+    const response = await updateResolvedEvents(eventId, user.userId);
+    if (!response.success) {
+      return sendResponse(res, 401, false, response.message);
     }
-    panicEvent.resolved = !panicEvent.resolved;
-    panicEvent.resolvedBy = user.userId;
-    panicEvent.resolvedAt = new Date();
-    await panicEvent.save();
-    const updatedPanicEvent = await PanicEvent.findById(eventId).populate(
-      "resolvedBy",
-      "name email"
-    );
-    console.log("updated panic event:", updatedPanicEvent);
-
-    console.log("updated panic event:", updatedPanicEvent);
     sendResponse(res, 200, true, "success", {
       message: "Panic event resolved successfully.",
-      data: updatedPanicEvent,
+      data: response.data,
     });
   } catch (error) {
     console.error("Error updating resolved panic event:", error);
@@ -271,35 +174,13 @@ async function updateNotifiedContacts(req, res) {
     if (!eventId) {
       return sendResponse(res, 401, false, "invalid request!");
     }
-    //update the notifed contacts
-    const updated = {
-      notifications: {
-        type: user.role,
-        userId: user.userId,
-      },
-    };
-    const updatedPanicEvent = await PanicEvent.findOneAndUpdate(
-      {
-        _id: eventId,
-        notifications: {
-          $not: {
-            $elemMatch: { userId: user.userId },
-          },
-        },
-      },
-      { $push: updated },
-      { new: true }
-    );
-    let panicEventData = updatedPanicEvent;
-    if (!updatedPanicEvent) {
-      panicEventData = await PanicEvent.findById(eventId);
-      if (!panicEventData) {
-        return sendResponse(res, 401, false, "panic event not found!");
-      }
+    const response = await updateNotified(eventId, user);
+    if (!response.success) {
+      return sendResponse(res, 401, false, response.message);
     }
 
     return sendResponse(res, 200, true, "success", "successfully updated!", {
-      data: panicEventData,
+      data: response.data,
     });
   } catch (error) {
     console.error("Error updating notified contacts:", error);
@@ -320,37 +201,13 @@ async function updateAcknowledgedContacts(req, res) {
       return sendResponse(res, 401, false, "invalid request!");
     }
     //update the acknowledged contacts
-    const updated = {
-      acknowledgedBy: {
-        userId: user.userId,
-        notifiedAt: new Date(),
-        response: null,
-        name: user.name,
-        email: user.email,
-      },
-    };
-    const updatedPanicEvent = await PanicEvent.findOneAndUpdate(
-      {
-        _id: eventId,
-        acknowledgedBy: {
-          $not: {
-            $elemMatch: { userId: user.userId },
-          },
-        },
-      },
-      { $push: updated },
-      { new: true }
-    );
-    let panicEventData = updatedPanicEvent;
-    if (!updatedPanicEvent) {
-      panicEventData = await PanicEvent.findById(eventId);
-      if (!panicEventData) {
-        return sendResponse(res, 401, false, "panic event not found!");
-      }
+    const response = await updateAcknowledgedBy(eventId, user);
+    if (!response.success) {
+      return sendResponse(res, 401, false, response.message);
     }
 
     return sendResponse(res, 200, true, "success", "successfully updated!", {
-      data: panicEventData,
+      data: response.data,
     });
   } catch (error) {
     console.error("Error updating acknowledged contacts:", error);

@@ -37,9 +37,8 @@ async function registerUser(req, res) {
     } else {
       existingUser = await findWithEmail(email);
     }
-    console.log("fine...");
     console.log("existingUser:", existingUser);
-    if (!existingUser.length === 0) {
+    if (!(existingUser.length === 0)) {
       return sendResponse(
         res,
         400,
@@ -47,7 +46,6 @@ async function registerUser(req, res) {
         "User with this email or student id already exists."
       );
     }
-    console.log("finno...");
 
     // Create new user
     const newUser = await saveUser(req.body);
