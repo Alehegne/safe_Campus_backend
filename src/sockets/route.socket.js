@@ -4,7 +4,7 @@ const Route = require("../models/route.model");
 // Rate limiting configuration
 const RATE_LIMIT = {
   windowMs: 60 * 1000, // 1 minute
-  maxUpdates: 60 // Maximum 60 updates per minute
+  maxUpdates: 60, // Maximum 60 updates per minute
 };
 
 // Store for rate limiting
@@ -13,45 +13,47 @@ const updateCounts = new Map();
 function initRouteSocket(routeNamespace) {
   // Handle route room management
   routeNamespace.on("connection", (socket) => {
-    console.log('New route socket connection:', {
+    console.log("New route socket connection:", {
       socketId: socket.id,
-      user: socket.user
+      user: socket.user,
     });
 
     // Join route room
     socket.on("route:join", async (routeId) => {
-      console.log('Attempting to join route:', {
+      console.log("Attempting to join route:", {
         routeId,
         socketId: socket.id,
-        user: socket.user
+        user: socket.user,
       });
 
       try {
         const route = await Route.findById(routeId);
         if (!route) {
-          console.log('Route not found:', routeId);
+          console.log("Route not found:", routeId);
           return socket.emit("error", { message: "Route not found" });
         }
-        
-        console.log('Found route:', {
+
+        console.log("Found route:", {
           routeId: route._id,
           userId: route.userId,
-          socketUserId: socket.user?.userId
+          socketUserId: socket.user?.userId,
         });
 
         // Check if user has permission to join
         if (route.userId.toString() !== socket.user?.userId) {
-          console.log('Unauthorized join attempt:', {
+          console.log("Unauthorized join attempt:", {
             routeUserId: route.userId.toString(),
-            socketUserId: socket.user?.userId
+            socketUserId: socket.user?.userId,
           });
-          return socket.emit("error", { message: "Unauthorized to join this route" });
+          return socket.emit("error", {
+            message: "Unauthorized to join this route",
+          });
         }
-        
+
         socket.join(`route:${routeId}`);
-        console.log('Successfully joined route room:', {
+        console.log("Successfully joined route room:", {
           routeId,
-          socketId: socket.id
+          socketId: socket.id,
         });
         socket.emit("route:joined", { routeId });
       } catch (error) {
@@ -59,7 +61,7 @@ function initRouteSocket(routeNamespace) {
           error,
           routeId,
           socketId: socket.id,
-          user: socket.user
+          user: socket.user,
         });
         socket.emit("error", { message: "Failed to join route room" });
       }
@@ -75,17 +77,21 @@ function initRouteSocket(routeNamespace) {
     socket.on("route:location-update", async (data) => {
       try {
         const { routeId, location } = data;
-        
+
         // Validate input
         if (!routeId || !location || !location.coordinates) {
-          return socket.emit("error", { message: "Invalid location update data" });
+          return socket.emit("error", {
+            message: "Invalid location update data",
+          });
         }
 
         // Check rate limit
         const now = Date.now();
         const userUpdates = updateCounts.get(socket.user.userId) || [];
-        const recentUpdates = userUpdates.filter(time => now - time < RATE_LIMIT.windowMs);
-        
+        const recentUpdates = userUpdates.filter(
+          (time) => now - time < RATE_LIMIT.windowMs
+        );
+
         if (recentUpdates.length >= RATE_LIMIT.maxUpdates) {
           return socket.emit("error", { message: "Too many location updates" });
         }
@@ -101,15 +107,17 @@ function initRouteSocket(routeNamespace) {
         }
 
         if (route.userId.toString() !== socket.user.userId) {
-          return socket.emit("error", { message: "Unauthorized to update this route" });
+          return socket.emit("error", {
+            message: "Unauthorized to update this route",
+          });
         }
 
         route.locationPoints.push({
           location: {
             type: "Point",
-            coordinates: location.coordinates
+            coordinates: location.coordinates,
           },
-          timestamp: new Date()
+          timestamp: new Date(),
         });
 
         await route.save();
@@ -117,7 +125,7 @@ function initRouteSocket(routeNamespace) {
         // Broadcast update to all clients in the route room
         routeNamespace.to(`route:${routeId}`).emit("route:location-updated", {
           routeId,
-          location: route.locationPoints[route.locationPoints.length - 1]
+          location: route.locationPoints[route.locationPoints.length - 1],
         });
       } catch (error) {
         console.error(`Error updating route location: ${error.message}`);
@@ -129,7 +137,7 @@ function initRouteSocket(routeNamespace) {
     socket.on("route:share", async (data) => {
       try {
         const { routeId, sharedWith } = data;
-        
+
         if (!routeId || !sharedWith) {
           return socket.emit("error", { message: "Invalid share data" });
         }
@@ -140,7 +148,9 @@ function initRouteSocket(routeNamespace) {
         }
 
         if (route.userId.toString() !== socket.user.userId) {
-          return socket.emit("error", { message: "Unauthorized to share this route" });
+          return socket.emit("error", {
+            message: "Unauthorized to share this route",
+          });
         }
 
         route.sharedWith.push(sharedWith);
@@ -149,7 +159,7 @@ function initRouteSocket(routeNamespace) {
         // Notify the shared user
         routeNamespace.to(`user:${sharedWith}`).emit("route:shared", {
           routeId,
-          sharedBy: socket.user.userId
+          sharedBy: socket.user.userId,
         });
 
         socket.emit("route:shared-success", { routeId, sharedWith });
@@ -163,9 +173,11 @@ function initRouteSocket(routeNamespace) {
     socket.on("route:status-change", async (data) => {
       try {
         const { routeId, status } = data;
-        
+
         if (!routeId || !status) {
-          return socket.emit("error", { message: "Invalid status change data" });
+          return socket.emit("error", {
+            message: "Invalid status change data",
+          });
         }
 
         const route = await Route.findById(routeId);
@@ -174,7 +186,9 @@ function initRouteSocket(routeNamespace) {
         }
 
         if (route.userId.toString() !== socket.user.userId) {
-          return socket.emit("error", { message: "Unauthorized to change route status" });
+          return socket.emit("error", {
+            message: "Unauthorized to change route status",
+          });
         }
 
         route.status = status;
@@ -183,7 +197,7 @@ function initRouteSocket(routeNamespace) {
         // Broadcast status change to all clients in the route room
         routeNamespace.to(`route:${routeId}`).emit("route:status-changed", {
           routeId,
-          status
+          status,
         });
 
         socket.emit("route:status-changed-success", { routeId, status });
@@ -192,7 +206,17 @@ function initRouteSocket(routeNamespace) {
         socket.emit("error", { message: "Failed to change route status" });
       }
     });
+
+    socket.on("disconnect", () => {
+      console.log("Route socket disconnected:", {
+        socketId: socket.id,
+        user: socket.user,
+      });
+      if (socket.user?.userId) {
+        updateCounts.delete(socket.user.userId);
+      }
+    });
   });
 }
 
-module.exports = initRouteSocket; 
+module.exports = initRouteSocket;
