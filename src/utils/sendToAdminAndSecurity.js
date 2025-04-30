@@ -1,16 +1,18 @@
 const sendEmail = require("./sendEmail");
 const getAdminGuardEmailInfo = require("./templates/alertOfficial");
 
-async function sendAlertToAdminAndSecurity(adminAndGuards, userPayLoad, io) {
-  console.log("starting to send alert to admin and guards");
+async function sendAlertToAdminAndSecurity(
+  adminAndGuards,
+  userPayLoad,
+  io,
+  onlineUsers
+) {
   for (const user of adminAndGuards) {
-    console.log("send alert to admin and guards:", user.email);
     const id = user._id.toString();
-    const socketId = global.onlineUsers[id];
+    const socketId = onlineUsers[id];
     if (socketId) {
       //send socket event to the
       io.to(socketId).emit("panicEvent", userPayLoad);
-      console.log("done sending socket event to admin and guards:", user.email);
     }
 
     //send FCM to the contact
@@ -26,11 +28,8 @@ async function sendAlertToAdminAndSecurity(adminAndGuards, userPayLoad, io) {
 
     //send email with view link and response link
 
-    console.log("send email to admin and guards:", user.email);
-
     const emailInfo = getAdminGuardEmailInfo(userPayLoad, user.email);
     await sendEmail(emailInfo);
-    console.log("done sending email to admin and guards:", user.email);
   }
 }
 

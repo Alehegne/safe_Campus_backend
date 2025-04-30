@@ -19,13 +19,24 @@ async function sendPanic(userId, location, eventId) {
   //         - If offline → FCM
   //    3. For each guard and admin:
   //     - Same logic: online → socket, offline → FCM
-  console.log("userInfo:", userInfo);
+  // console.log("userInfo:", userInfo);
   const trustedContacts = userInfo.trustedContacts;
   const adminAndGuards = await findAdminAndSecurity();
   const io = getIO();
+  const onlineUsers = global.onlineUsers;
   const userPayLoad = getUserPayload(userInfo, location, eventId);
-  await sendAlertToTrustedContacts(trustedContacts, userPayLoad, io);
-  await sendAlertToAdminAndSecurity(adminAndGuards, userPayLoad, io);
+  await sendAlertToTrustedContacts(
+    trustedContacts,
+    userPayLoad,
+    io,
+    onlineUsers
+  );
+  await sendAlertToAdminAndSecurity(
+    adminAndGuards,
+    userPayLoad,
+    io,
+    onlineUsers
+  );
 }
 async function savePanicEvent(panicEvent) {
   const newPanicEvent = new PanicEvent(panicEvent);
@@ -118,7 +129,7 @@ async function updateAcknowledgedFromEmail(decodedToken) {
       message: "invalid token",
     };
   }
-  console.log("decoded token:", decodedToken);
+  // console.log("decoded token:", decodedToken);
   const { email, response, eventId, role } = decodedToken;
   if (!email || !response || !eventId || !role) {
     return {
@@ -155,7 +166,7 @@ async function updateAcknowledgedFromEmail(decodedToken) {
     panicEvent.location.coordinates[1],
     panicEvent.location.coordinates[0]
   );
-  console.log("updated panic event:", updatedPanicEvent);
+  // console.log("updated panic event:", updatedPanicEvent);
   //if the req is from gmail, redirect
   return {
     success: true,

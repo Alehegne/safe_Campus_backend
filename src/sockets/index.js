@@ -1,12 +1,17 @@
-const socketAuth = require('./middleware/socket.auth');
-const initRouteSocket = require('./route.socket');
+const socketAuth = require("./middleware/socket.auth");
+const initRouteSocket = require("./route.socket");
+const {
+  addOnlineUser,
+  getAllOnlineUsers,
+  removeOnlineUser,
+} = require("./onlineUser");
 
 function initSocketEvents(io) {
   // Global error handling middleware
   io.use((socket, next) => {
-    socket.on('error', (error) => {
+    socket.on("error", (error) => {
       console.error(`Socket error for client ${socket.id}:`, error);
-      socket.emit('error', { message: 'An error occurred' });
+      socket.emit("error", { message: "An error occurred" });
     });
     next();
   });
@@ -15,42 +20,24 @@ function initSocketEvents(io) {
   io.use(socketAuth);
 
   // Initialize route namespace after authentication
-  const routeNamespace = io.of('/routes');
-  
+  const routeNamespace = io.of("/routes");
+
   // Apply authentication to route namespace
   routeNamespace.use(socketAuth);
-  
+
   // Initialize route socket events
   initRouteSocket(routeNamespace);
-
+ 
   // Connection state tracking
-  io.on('connection', (socket) => {
-    const connectionTime = new Date();
-    
-    socket.on('disconnect', (reason) => {
-      const duration = new Date() - connectionTime;
-      console.log(`Client disconnected - ID: ${socket.id}, Duration: ${duration}ms, Reason: ${reason}`);
-const {
-  addOnlineUser,
-  getAllOnlineUsers,
-  removeOnlineUser,
-} = require("./onlineUser");
-
-module.exports = function initSocketEvents(io) {
   io.on("connection", (socket) => {
-    console.log("a client connected, client id:", socket.id);
-    // Middleware for specific event
-    // socket.use((packet, next) => {
-    //   console.log("packet:", packet);
-    //   if (packet[0] === "message") {
-    //     const message = packet[1];
-    //     if (message.length < 5) {
-    //       return next(new Error("Message too short!"));
-    //     }
-    //   }
-    //   next();
-    // });
+    const connectionTime = new Date();
 
+    socket.on("disconnect", (reason) => {
+      const duration = new Date() - connectionTime;
+      console.log(
+        `Client disconnected - ID: ${socket.id}, Duration: ${duration}ms, Reason: ${reason}`
+      );
+    });
     socket.on("register_online", (userId) => {
       addOnlineUser(userId, socket.id);
       socket.join(userId); // Join the user to their own room

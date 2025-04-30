@@ -10,12 +10,7 @@ const {
   updateNotified,
   updateAcknowledgedBy,
 } = require("../services/panicAlert.service");
-const {
-  decodeToken,
-  getGoogleMapURL,
-  getTrackingImage,
-} = require("../utils/helper");
-const PanicEvent = require("../models/panicEvent.model");
+const { decodeToken, getTrackingImage } = require("../utils/helper");
 const { default: mongoose } = require("mongoose");
 async function triggerPanicEvent(req, res) {
   try {
@@ -48,7 +43,7 @@ async function triggerPanicEvent(req, res) {
     await sendPanic(user.userId, location, newPanicEvent._id);
     //save the panic event to the database
 
-    console.log("new event created:", newPanicEvent);
+    // console.log("new event created:", newPanicEvent);
     sendResponse(res, 200, true, "success", {
       message: "Panic event triggered successfully.",
       data: newPanicEvent,
@@ -100,7 +95,7 @@ async function getAllPanicByUserId(req, res) {
 //from the email response, update the acknowledgedBy field in the panic event
 async function responseHandler(req, res) {
   try {
-    console.log("response handler called!");
+    // console.log("response handler called!");
     const token = req.query.token;
     const secret = process.env.RESPONSE_TOKEN_SECRET;
     const decodedToken = decodeToken(token, secret);
@@ -117,7 +112,7 @@ async function responseHandler(req, res) {
       `${process.env.GMAIL_REDIRECT_URL}?response=${decodeToken.response}&victim=${decodedToken.name}$mapUrl=${message}`
     );
   } catch (error) {
-    console.error("Error handling response:", error);
+    // console.error("Error handling response:", error);
     return sendResponse(
       res,
       500,
@@ -129,11 +124,11 @@ async function responseHandler(req, res) {
 //from email, update the notified contacts
 async function emailViewTracker(req, res) {
   try {
-    console.log("email view tracker called!");
+    // console.log("email view tracker called!");
     const token = req.query.token;
     const secret = process.env.TRACKING_TOKEN_SECRET;
     const decodeToken = decodeToken(token, secret);
-    console.log("decoded token:", decodeToken);
+    // console.log("decoded token:", decodeToken);
     const { success, message } = await emailTracker(decodeToken);
     if (!success) {
       return res.send(message);
