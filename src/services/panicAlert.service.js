@@ -113,7 +113,10 @@ async function getAllEventByUserId(user, query) {
 }
 async function updateAcknowledgedFromEmail(decodedToken) {
   if (!decodedToken || decodedToken.type !== "response") {
-    return sendResponse(res, 401, false, "invalid token!");
+    return {
+      success: false,
+      message: "invalid token",
+    };
   }
   console.log("decoded token:", decodedToken);
   const { email, response, eventId, role } = decodedToken;
@@ -123,45 +126,34 @@ async function updateAcknowledgedFromEmail(decodedToken) {
       message: "invalid token!",
     };
   }
-  //update the panic event with the response
-  const updated = {
-    acknowledgedBy: {
+  //find panic event by id
+  const panicEvent = await PanicEvent.findById(eventId);
+  if (!panicEvent) {
+    return {
+      success: false,
+      message: "panic event not found!",
+    };
+  }
+  //check if the event is already acknowledged by the user
+  const acknowledgedBy = panicEvent.acknowledgedBy.some(
+    (acknowledgedBy) =>
+      acknowledgedBy.email === email && acknowledgedBy.response === response
+  );
+  //push the new acknowledgement
+  if (!acknowledgedBy) {
+    panicEvent.acknowledgedBy.push({
       userId: decodedToken?.userId,
       notifiedAt: new Date(),
       response: response,
       name: decodedToken.name,
       email: decodedToken?.email,
-    },
-  };
-
-  const updatedPanicEvent = await PanicEvent.findOneAndUpdate(
-    {
-      _id: eventId,
-      acknowledgedBy: {
-        $not: {
-          $elemMatch: { email: decodedToken?.email, response: response },
-        },
-      },
-    },
-    { $push: updated },
-    { new: true }
-  );
-  console.log("fine:");
-  console.log("updated panic event:", updatedPanicEvent);
-  let panicEventData = updatedPanicEvent;
-  if (!updatedPanicEvent) {
-    panicEventData = await PanicEvent.findById(eventId);
-    if (!panicEventData) {
-      return {
-        success: false,
-        message: "panic event not found!",
-      };
-    }
+    });
+    await panicEvent.save();
   }
 
   const mapUrl = getGoogleMapURL(
-    panicEventData.location.coordinates[1],
-    panicEventData.location.coordinates[0]
+    panicEvent.location.coordinates[1],
+    panicEvent.location.coordinates[0]
   );
   console.log("updated panic event:", updatedPanicEvent);
   //if the req is from gmail, redirect
@@ -186,37 +178,29 @@ async function emailTracker(decodeToken) {
     };
   }
 
-  //update the panic notification with the response
-  const updated = {
-    notifications: {
+  //find the event
+  const panicEvent = await PanicEvent.findById(eventId);
+  if (!panicEvent) {
+    return {
+      success: "false",
+      message: "no panicEvent found",
+    };
+  }
+
+  //already tracked
+  const alreadyTracked = panicEvent.notifications.some(
+    (notification) => notification.email === email && notification.type === role
+  );
+
+  if (!alreadyTracked) {
+    panicEvent.notifications.push({
       type: role,
       name: decodeToken?.name,
       email: decodeToken?.email,
       notifiedAt: new Date(),
-    },
-  };
-
-  //update the panic event with the response
-  const updatedPanicEvent = await PanicEvent.findOneAndUpdate(
-    {
-      _id: eventId,
-      notifications: {
-        $not: {
-          $elemMatch: { email: decodeToken?.email, type: role },
-        },
-      },
-    },
-    { $push: updated },
-    { new: true }
-  );
-
-  if (!updatedPanicEvent) {
-    return {
-      success: false,
-      message: "invalid tracking link!",
-    };
+    });
+    await panicEvent.save();
   }
-
   return {
     success: true,
     message: "email view tracked successfully!",
@@ -228,99 +212,88 @@ async function updateResolvedEvents(eventId, userId) {
   if (!panicEvent) {
     return {
       success: false,
-      message: "panic event not found!",
+      message: "Panic event not found!",
     };
   }
-  panicEvent.resolved = !panicEvent.resolved;
+
+  panicEvent.resolved = !panicEvent.resolved; // toggle boolean
   panicEvent.resolvedBy = userId;
-  panicEvent.resolvedAt = new Date();
+  panicEvent.resolvedAt = Date.now();
+
   await panicEvent.save();
-  const updatedPanicEvent = await PanicEvent.findById(eventId).populate(
-    "resolvedBy",
-    "name email"
-  );
-  console.log("updated panic event:", updatedPanicEvent);
+
+  await panicEvent.populate("resolvedBy", "fullName email");
 
   return {
     success: true,
     message: "Panic event resolved successfully.",
-    data: updatedPanicEvent,
+    data: panicEvent,
   };
 }
 async function updateNotified(eventId, user) {
-  //update the notifed contacts
-  const updated = {
-    notifications: {
+  const panicEvent = await PanicEvent.findById(eventId);
+  if (!panicEvent) {
+    return {
+      success: false,
+      message: "not panic event found",
+    };
+  }
+  //check if not already notified
+  const alreadyNotified = panicEvent.notifications.some(
+    (notif) => notif.userId.toString() === user.userId.toString()
+  );
+  if (!alreadyNotified) {
+    panicEvent.notifications.push({
       type: user.role,
       userId: user.userId,
-    },
-  };
-  const updatedPanicEvent = await PanicEvent.findOneAndUpdate(
-    {
-      _id: eventId,
-      notifications: {
-        $not: {
-          $elemMatch: { userId: user.userId },
-        },
-      },
-    },
-    { $push: updated },
-    { new: true }
-  );
-  let panicEventData = updatedPanicEvent;
-  if (!updatedPanicEvent) {
-    panicEventData = await PanicEvent.findById(eventId);
-    if (!panicEventData) {
-      return {
-        success: false,
-        message: "panic event not found!",
-      };
-    }
+      notifiedAt: new Date(),
+    });
+
+    await panicEvent.save();
   }
 
   return {
     success: true,
-    message: "successfully updated!",
-    data: panicEventData,
+    message: alreadyNotified
+      ? "User was already notified."
+      : "User notification added successfully.",
+    data: panicEvent,
   };
 }
 
-async function updateAcknowledgedBy(eventId, user) {
-  const updated = {
-    acknowledgedBy: {
+async function updateAcknowledgedBy(eventId, user, response) {
+  //find the event
+  const panicEvent = await PanicEvent.findById(eventId);
+
+  if (!panicEvent) {
+    return {
+      success: false,
+      message: "the event could not be found",
+    };
+  }
+
+  //check user in acknowledgedBy
+  const alreadyAck = panicEvent.acknowledgedBy.some(
+    (ack) =>
+      ack.userId.toString() === user.userId.toString() &&
+      ack.response === response
+  );
+  if (!alreadyAck) {
+    //add the user to the acknowledgedBy
+    panicEvent.acknowledgedBy.push({
       userId: user.userId,
       notifiedAt: new Date(),
-      response: null,
-      name: user.name,
-      email: user.email,
-    },
-  };
-  const updatedPanicEvent = await PanicEvent.findOneAndUpdate(
-    {
-      _id: eventId,
-      acknowledgedBy: {
-        $not: {
-          $elemMatch: { userId: user.userId },
-        },
-      },
-    },
-    { $push: updated },
-    { new: true }
-  );
-  let panicEventData = updatedPanicEvent;
-  if (!updatedPanicEvent) {
-    panicEventData = await PanicEvent.findById(eventId);
-    if (!panicEventData) {
-      return {
-        success: false,
-        message: "panic event not found!",
-      };
-    }
+      response: response,
+    });
+    await panicEvent.save();
   }
+
   return {
     success: true,
-    message: "successfully updated!",
-    data: panicEventData,
+    message: alreadyAck
+      ? "You already acknowledged with the same response."
+      : "Acknowledgement recorded successfully.",
+    data: panicEvent,
   };
 }
 

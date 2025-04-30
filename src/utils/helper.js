@@ -27,10 +27,18 @@ function getGoogleMapURL(lat, lng) {
   return `https://maps.google.com/?q=${lat},${lng}`;
 }
 
+function getTrackingImage() {
+  return Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/gbLbfsAAAAASUVORK5CYII=",
+    "base64"
+  );
+}
+
 module.exports = {
   generateJwtToken,
   comparePassword,
   decodeJwtToken,
   getGoogleMapURL,
   decodeToken,
+  getTrackingImage,
 };

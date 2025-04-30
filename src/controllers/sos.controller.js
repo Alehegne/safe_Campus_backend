@@ -10,8 +10,13 @@ const {
   updateNotified,
   updateAcknowledgedBy,
 } = require("../services/panicAlert.service");
-const { decodeToken, getGoogleMapURL } = require("../utils/helper");
+const {
+  decodeToken,
+  getGoogleMapURL,
+  getTrackingImage,
+} = require("../utils/helper");
 const PanicEvent = require("../models/panicEvent.model");
+const { default: mongoose } = require("mongoose");
 async function triggerPanicEvent(req, res) {
   try {
     const { user } = req;
@@ -58,8 +63,9 @@ async function getAllPanicEvents(req, res) {
     const response = await getAllEvents(req.query);
 
     const { events, analysis } = response;
-    if (!events) {
-      return sendResponse(res, 401, false, "failed to get panic events!");
+
+    if (!events || events.length === 0) {
+      return sendResponse(res, 200, true, "no panic events found!", []);
     }
     return sendResponse(res, 200, true, "success", {
       message: "Panic events retrieved successfully.",
@@ -91,6 +97,7 @@ async function getAllPanicByUserId(req, res) {
     return sendResponse(res, 500, false, "Internal server error!");
   }
 }
+//from the email response, update the acknowledgedBy field in the panic event
 async function responseHandler(req, res) {
   try {
     console.log("response handler called!");
@@ -98,7 +105,9 @@ async function responseHandler(req, res) {
     const secret = process.env.RESPONSE_TOKEN_SECRET;
     const decodedToken = decodeToken(token, secret);
 
-    const { success, message } = updateAcknowledgedFromEmail(decodedToken);
+    const { success, message } = await updateAcknowledgedFromEmail(
+      decodedToken
+    );
 
     if (!success) {
       return res.send(message);
@@ -109,10 +118,15 @@ async function responseHandler(req, res) {
     );
   } catch (error) {
     console.error("Error handling response:", error);
-    return sendResponse(res, 500, false, "Internal server error!");
+    return sendResponse(
+      res,
+      500,
+      false,
+      "error in updating acknowledgement from email!"
+    );
   }
 }
-
+//from email, update the notified contacts
 async function emailViewTracker(req, res) {
   try {
     console.log("email view tracker called!");
@@ -120,16 +134,13 @@ async function emailViewTracker(req, res) {
     const secret = process.env.TRACKING_TOKEN_SECRET;
     const decodeToken = decodeToken(token, secret);
     console.log("decoded token:", decodeToken);
-    const { success, message } = emailTracker(decodeToken);
+    const { success, message } = await emailTracker(decodeToken);
     if (!success) {
       return res.send(message);
     }
 
     //send the response to the image href
-    const img = Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/gbLbfsAAAAASUVORK5CYII=",
-      "base64"
-    );
+    const img = getTrackingImage();
     res.set("Content-Type", "image/png");
     res.send(img);
   } catch (error) {
@@ -142,7 +153,7 @@ async function resolvedPanicEvent(req, res) {
   try {
     const { eventId } = req.params;
     const { user } = req;
-    if (!eventId) {
+    if (!eventId || mongoose.Types.ObjectId.isValid(eventId)) {
       return sendResponse(res, 401, false, "invalid request!");
     }
     //toggle the resolved status of the panic event,
@@ -162,7 +173,7 @@ async function resolvedPanicEvent(req, res) {
       res,
       500,
       false,
-      "Internal server error!",
+      "error in updating resolved panic event!",
       error.message
     );
   }
@@ -188,26 +199,28 @@ async function updateNotifiedContacts(req, res) {
       res,
       500,
       false,
-      "Internal server error!",
+      "error in updating notified users!",
       error.message
     );
   }
 }
+//TODO: the front end should send the response of the user,
 async function updateAcknowledgedContacts(req, res) {
   try {
     const { eventId } = req.params;
     const { user } = req;
+    const { response = null } = req.body;
     if (!eventId) {
       return sendResponse(res, 401, false, "invalid request!");
     }
     //update the acknowledged contacts
-    const response = await updateAcknowledgedBy(eventId, user);
-    if (!response.success) {
-      return sendResponse(res, 401, false, response.message);
+    const result = await updateAcknowledgedBy(eventId, user, response);
+    if (!result.success) {
+      return sendResponse(res, 401, false, result.message);
     }
 
     return sendResponse(res, 200, true, "success", "successfully updated!", {
-      data: response.data,
+      data: result.data,
     });
   } catch (error) {
     console.error("Error updating acknowledged contacts:", error);
@@ -215,7 +228,7 @@ async function updateAcknowledgedContacts(req, res) {
       res,
       500,
       false,
-      "Internal server error!",
+      "error in updating acknowledged user!",
       error.message
     );
   }
