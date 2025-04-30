@@ -17,7 +17,7 @@ async function startRoute(req, res) {
     // Ensure coordinates are pure numbers in [longitude, latitude] order
     const coordinates = [
       parseFloat(startLocation.coordinates[0]),
-      parseFloat(startLocation.coordinates[1])
+      parseFloat(startLocation.coordinates[1]),
     ];
 
     if (isNaN(coordinates[0]) || isNaN(coordinates[1])) {
@@ -28,21 +28,23 @@ async function startRoute(req, res) {
       userId: user.userId,
       startLocation: {
         type: "Point",
-        coordinates: coordinates
+        coordinates: coordinates,
       },
       description,
       status: "started",
-      locationPoints: [{
-        location: {
-          type: "Point",
-          coordinates: coordinates
+      locationPoints: [
+        {
+          location: {
+            type: "Point",
+            coordinates: coordinates,
+          },
+          timestamp: new Date(),
         },
-        timestamp: new Date()
-      }]
+      ],
     });
 
     await newRoute.save();
-    
+
     sendResponse(res, 201, true, "Route started successfully", newRoute);
   } catch (error) {
     sendResponse(res, 500, false, "Server error", null, error.message);
@@ -71,26 +73,69 @@ async function stopRoute(req, res) {
 
     route.status = "ended";
     route.endTime = new Date();
-    
+
     if (endLocation && endLocation.coordinates) {
       // set the route's endLocation
       route.endLocation = {
         type: "Point",
-        coordinates: endLocation.coordinates
+        coordinates: endLocation.coordinates,
       };
 
-      
       route.locationPoints.push({
         location: {
           type: "Point",
-          coordinates: endLocation.coordinates
+          coordinates: endLocation.coordinates,
         },
-        timestamp: new Date()
+        timestamp: new Date(),
       });
     }
 
     await route.save();
     sendResponse(res, 200, true, "Route ended successfully", route);
+  } catch (error) {
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
+async function getSharedWithMe(req, res) {
+  try {
+    const { user } = req;
+    if (!user) {
+      return sendResponse(res, 401, false, "Unauthorized", null);
+    }
+
+    // Get all routes shared with the user
+    const sharedRoutes = await Route.find({
+      "sharedWith.userId": user.userId,
+      status: { $ne: "ended" }, // Exclude ended routes
+    });
+
+    if (sharedRoutes.length === 0) {
+      return sendResponse(res, 404, false, "No shared routes found", null);
+    }
+
+    // Map the shared routes to include only necessary information
+    const sharedRoutesInfo = sharedRoutes.map((route) => ({
+      userId: route.userId,
+      routeId: route._id,
+      startLocation: route.startLocation,
+      endLocation: route.endLocation,
+      status: route.status,
+      startTime: route.startTime,
+      endTime: route.endTime,
+      description: route.description,
+      sharedWith: route.sharedWith.map((share) => ({
+        userId: share.userId,
+        sharedAt: share.sharedAt,
+      })),
+    }));
+
+    sendResponse(
+      res,
+      200,
+      true,
+      "Shared routes retrieved successfully",
+      sharedRoutesInfo
+    );
   } catch (error) {
     sendResponse(res, 500, false, "Server error", null, error.message);
   }
@@ -108,7 +153,13 @@ async function updateRouteLocation(req, res) {
     const { coordinates } = req.body;
 
     if (!coordinates) {
-      return sendResponse(res, 400, false, "Location coordinates are required", null);
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Location coordinates are required",
+        null
+      );
     }
 
     const route = await Route.findOne({ _id: routeId, userId: user.userId });
@@ -117,13 +168,19 @@ async function updateRouteLocation(req, res) {
     }
 
     if (route.status === "ended") {
-      return sendResponse(res, 400, false, "Cannot update location of ended route", null);
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Cannot update location of ended route",
+        null
+      );
     }
 
     // Ensure coordinates are pure numbers in [longitude, latitude] order
     const locationCoordinates = [
       parseFloat(coordinates[0]),
-      parseFloat(coordinates[1])
+      parseFloat(coordinates[1]),
     ];
 
     if (isNaN(locationCoordinates[0]) || isNaN(locationCoordinates[1])) {
@@ -134,9 +191,9 @@ async function updateRouteLocation(req, res) {
     route.locationPoints.push({
       location: {
         type: "Point",
-        coordinates: locationCoordinates
+        coordinates: locationCoordinates,
       },
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     await route.save();
@@ -156,7 +213,7 @@ async function getRouteStatus(req, res) {
 
     const { routeId } = req.params;
     const route = await Route.findOne({ _id: routeId, userId: user.userId });
-    
+
     if (!route) {
       return sendResponse(res, 404, false, "Route not found", null);
     }
@@ -165,7 +222,7 @@ async function getRouteStatus(req, res) {
       status: route.status,
       startTime: route.startTime,
       endTime: route.endTime,
-      currentLocation: route.locationPoints[route.locationPoints.length - 1]
+      currentLocation: route.locationPoints[route.locationPoints.length - 1],
     });
   } catch (error) {
     sendResponse(res, 500, false, "Server error", null, error.message);
@@ -193,21 +250,32 @@ async function shareRoute(req, res) {
     }
 
     // Add new friends to sharedWith array
-    const newFriends = friendIds.filter(friendId => 
-      !route.sharedWith.some(share => share.userId.toString() === friendId)
+    const newFriends = friendIds.filter(
+      (friendId) =>
+        !route.sharedWith.some((share) => share.userId.toString() === friendId)
     );
 
     if (newFriends.length === 0) {
-      return sendResponse(res, 400, false, "Route is already shared with these friends", null);
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Route is already shared with these friends",
+        null
+      );
     }
 
-    route.sharedWith.push(...newFriends.map(friendId => ({
-      userId: friendId,
-      sharedAt: new Date()
-    })));
+    route.sharedWith.push(
+      ...newFriends.map((friendId) => ({
+        userId: friendId,
+        sharedAt: new Date(),
+      }))
+    );
 
     await route.save();
-    sendResponse(res, 200, true, "Route shared successfully", { sharedWith: route.sharedWith });
+    sendResponse(res, 200, true, "Route shared successfully", {
+      sharedWith: route.sharedWith,
+    });
   } catch (error) {
     sendResponse(res, 500, false, "Server error", null, error.message);
   }
@@ -224,11 +292,17 @@ async function getSharedRoute(req, res) {
     const { routeId } = req.params;
     const route = await Route.findOne({
       _id: routeId,
-      "sharedWith.userId": user.userId
+      "sharedWith.userId": user.userId,
     });
 
     if (!route) {
-      return sendResponse(res, 404, false, "Route not found or not shared with you", null);
+      return sendResponse(
+        res,
+        404,
+        false,
+        "Route not found or not shared with you",
+        null
+      );
     }
 
     sendResponse(res, 200, true, "Shared route retrieved successfully", route);
@@ -247,7 +321,7 @@ async function getAllUserRoutes(req, res) {
 
     const { status } = req.query;
     const query = { userId: user.userId };
-    
+
     // Filter by status if provided
     if (status) {
       query.status = status;
@@ -255,7 +329,7 @@ async function getAllUserRoutes(req, res) {
 
     const routes = await Route.find(query)
       .sort({ startTime: -1 }) // Most recent first
-      .select('-locationPoints'); // Exclude location points for list view
+      .select("-locationPoints"); // Exclude location points for list view
 
     sendResponse(res, 200, true, "Routes retrieved successfully", routes);
   } catch (error) {
@@ -302,7 +376,7 @@ async function pauseRoute(req, res) {
 
     const { routeId } = req.params;
     const route = await Route.findOne({ _id: routeId, userId: user.userId });
-    
+
     if (!route) {
       return sendResponse(res, 404, false, "Route not found", null);
     }
@@ -333,5 +407,6 @@ module.exports = {
   getSharedRoute,
   getAllUserRoutes,
   updateRouteDetails,
-  pauseRoute
-}; 
+  pauseRoute,
+  getSharedWithMe,
+};
