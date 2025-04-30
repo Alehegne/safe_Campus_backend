@@ -10,45 +10,78 @@ const initSocketEvents = require("../sockets/index");
 let ioInstance;
 
 function initSocket(server) {
-  const io = new Server(server, {
-    cors: {
-      origin:
-        process.env.NODE_ENV === "production"
-          ? process.env.ALLOWEDORIGINS
-          : "*",
-      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    },
-  });
-  io.on("connection", (socket) => {
-    console.log("a client connected, client id:", socket.id);
-    // Middleware for specific event
-    // socket.use((packet, next) => {
-    //   console.log("packet:", packet);
-    //   if (packet[0] === "message") {
-    //     const message = packet[1];
-    //     if (message.length < 5) {
-    //       return next(new Error("Message too short!"));
-    //     }
-    //   }
-    //   next();
-    // });
-    // socket.emit("welcome", "welcome to the socket server");
-    // socket.on("message", (data) => {
-    //   console.log("message from client", data);
-    //   socket.broadcast.emit("new-message", data);
-    // });
-    socket.on("disconnect", () => {
-      console.log("client disconnected", socket.id);
+  try {
+    // Parse allowed origins from environment variable
+    const allowedOrigins = process.env.ALLOWEDORIGINS 
+      ? process.env.ALLOWEDORIGINS.split(',') 
+      : ['http://localhost:3000'];
+
+    const io = new Server(server, {
+      cors: {
+        origin: process.env.NODE_ENV === "production" ? allowedOrigins : "*",
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        credentials: true
+      },
+      // Connection settings
+      pingTimeout: 60000, // 60 seconds
+      pingInterval: 25000, // 25 seconds
+      connectTimeout: 45000, // 45 seconds
+      transports: ['websocket', 'polling']
     });
-  });
 
-  // Initialize socket events
-  initSocketEvents(io);
+    // Global error handling
+    io.engine.on("connection_error", (err) => {
+      console.error("Socket connection error:", {
+        code: err.code,
+        message: err.message,
+        req: err.req,
+        context: err.context
+      });
+    });
 
-  ioInstance = io;
+    // Initialize socket events first (this includes authentication middleware)
+    initSocketEvents(io);
+
+    // Create namespaces after middleware setup
+    const routeNamespace = io.of('/routes');
+    
+    // Namespace error handling
+    routeNamespace.on("connection_error", (err) => {
+      console.error("Route namespace connection error:", err);
+    });
+
+    // Connection handling
+    io.on("connection", (socket) => {
+      console.log(`Client connected - ID: ${socket.id}, IP: ${socket.handshake.address}`);
+
+      // Handle reconnection
+      socket.on("reconnect", (attemptNumber) => {
+        console.log(`Client reconnected - ID: ${socket.id}, Attempt: ${attemptNumber}`);
+      });
+
+      // Handle disconnection
+      socket.on("disconnect", (reason) => {
+        console.log(`Client disconnected - ID: ${socket.id}, Reason: ${reason}`);
+      });
+
+      // Handle errors
+      socket.on("error", (error) => {
+        console.error(`Socket error for client ${socket.id}:`, error);
+      });
+    });
+
+    ioInstance = io;
+    console.log("Socket.io server initialized successfully");
+  } catch (error) {
+    console.error("Failed to initialize Socket.io server:", error);
+    throw error;
+  }
 }
+
 function getIO() {
-  if (!ioInstance) throw new Error("Socket not initialized");
+  if (!ioInstance) {
+    throw new Error("Socket.io not initialized");
+  }
   return ioInstance;
 }
 

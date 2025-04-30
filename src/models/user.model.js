@@ -79,9 +79,10 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//index of location field
+// GeoJSON index for location-based queries
 userSchema.index({ location: "2dsphere" });
 
+// Hash password before saving
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);

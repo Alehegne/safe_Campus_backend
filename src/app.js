@@ -4,9 +4,12 @@ const authRoutes = require("./routes/auth.route");
 const profileRoutes = require("./routes/profile.route");
 const sosRoutes = require("./routes/panicAlert.route");
 const sendResponse = require("./utils/sendResponse");
+const routeRoutes = require("./routes/route.route");
+
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/routes", routeRoutes);
 app.use("/api/sos", sosRoutes);
 
 app.get("/", (req, res) => {
@@ -16,7 +19,7 @@ app.get("/", (req, res) => {
   });
 });
 
-//all route handlers
+// Error handling
 app.use((req, res, next) => {
   const error = new Error("Not Found");
   error.status = 404;

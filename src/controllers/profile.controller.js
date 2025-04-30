@@ -43,26 +43,22 @@ async function updateProfile(req, res) {
       return sendResponse(res, 400, false, "No data to update", null);
     }
 
-    // validate the update data
     const { success, message } = validateUpdateUser(updateData);
     if (!success) {
       return sendResponse(res, 400, false, message, null);
     }
-    const updatedProfile = await updateUser(userId, updateData);
-    if (!updatedProfile) {
+
+    const updatedUser = await updateUser(userId, updateData);
+    if (!updatedUser) {
       return sendResponse(res, 404, false, "User not found", null);
     }
-    sendResponse(
-      res,
-      200,
-      true,
-      "User profile updated successfully",
-      updatedProfile
-    );
+
+    sendResponse(res, 200, true, "Profile updated successfully", updatedUser);
   } catch (error) {
     sendResponse(res, 500, false, "Server error", null, error.message);
   }
 }
+
 async function deleteProfile(req, res) {
   try {
     const { user } = req;
@@ -70,20 +66,20 @@ async function deleteProfile(req, res) {
       return sendResponse(res, 401, false, "Unauthorized", null);
     }
     const { userId } = user;
-    const deletedProfile = await deleteUser(userId);
-    if (!deletedProfile) {
+
+    const deletedUser = await deleteUser(userId);
+    if (!deletedUser) {
       return sendResponse(res, 404, false, "User not found", null);
     }
-    sendResponse(
-      res,
-      200,
-      true,
-      "User profile deleted successfully",
-      deletedProfile
-    );
+
+    sendResponse(res, 200, true, "Profile deleted successfully", null);
   } catch (error) {
     sendResponse(res, 500, false, "Server error", null, error.message);
   }
 }
 
-module.exports = { getProfile, updateProfile, deleteProfile };
+module.exports = {
+  getProfile,
+  updateProfile,
+  deleteProfile,
+};
