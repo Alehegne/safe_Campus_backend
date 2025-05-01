@@ -1,278 +1,224 @@
-SafeCampus REST API Documentation
-#5 Reporting Incidents Feature
-A secure, real-time incident reporting and safety alert backend API for SafeCampus.
-
-
----
-
-Base URL
-
-http://your-server-domain.com/api
-
-
----
-
-Authentication
-
-Most routes are protected and require JWT authentication via the Authorization header.
-
-Authorization: Bearer <your_token>
-
-
----
-
-Endpoints
+Report API Documentation
 
 1. Report an Incident
+Endpoint: POST /api/reports
+Description: Allows users to report an incident with optional evidence and tags.
+Authentication: Token required in the header.
 
-POST /report
-
-Middleware: verifyToken, rateLimiter, multer (Cloudinary)
-
-FormData Required:
-
-image (jpeg/jpg/png, max size controlled by multer)
-
-
-Body:
-
-
+Request Body:
 {
-  "description": "string",
+  "description": "Incident description",
   "anonymous": true,
-  "latitude": "number",
-  "lng": "number",
-  "taglist": "tag1,tag2"
+  "tags": "tag1,tag2,tag3",
+  "location": {
+    "type": "Point",
+    "coordinates": [38.80895765457167, 8.891288891174664]
+  }
 }
 
-Response:
+description (string): Description of the incident (required).
+anonymous (boolean): Whether the report is anonymous (optional).
+tags (string): Comma-separated tags for the incident (optional).
+location (object): GeoJSON object with type and coordinates (required).
 
+
+Response:
+Success (200):
 
 {
   "success": true,
-  "Incident": { ... }
+  "message": "Incident reported successfully",
+  "data": {
+    "_id": "645c0e1234567890abcdef12",
+    "description": "Incident description",
+    "anonymous": true,
+    "tags": ["tag1", "tag2", "tag3"],
+    "location": {
+      "type": "Point",
+      "coordinates": [38.80895765457167, 8.891288891174664]
+    },
+    "evidenceImage": "https://cloudinary.com/image.jpg",
+    "reporterId": "645b9f1234567890abcdef34"
+  }
+}
+
+Error (400):
+
+{
+  "success": false,
+  "message": "Incomplete form",
+  "error": "Please fill in all required fields"
 }
 
 
----
+2. Get All Reports
+Endpoint: GET /api/reports
+Description: Retrieves all reports with optional pagination and filtering.
+Authentication: Token required in the header.
 
-2. Get All Incidents
-
-GET /incidents
-
-Middleware: verifyToken
+Query Parameters:
+page (number): Page number for pagination (optional, default: 1).
+limit (number): Number of reports per page (optional, default: 15).
+status (string): Filter by report status (pending, resolved, rejected) (optional).
+reporterId (string): Filter by reporter ID (optional).
+tags (string): Filter by tags (comma-separated) (optional).
 
 Response:
-
+Success (200):
 
 {
   "success": true,
-  "cachedIncidents": [ ... ]
+  "message": "Reports retrieved successfully",
+  "data": {
+    "reports": [
+      {
+        "_id": "645c0e1234567890abcdef12",
+        "description": "Incident description",
+        "anonymous": true,
+        "tags": ["tag1", "tag2", "tag3"],
+        "location": {
+          "type": "Point",
+          "coordinates": [38.80895765457167, 8.891288891174664]
+        },
+        "evidenceImage": "https://cloudinary.com/image.jpg",
+        "reporterId": "645b9f1234567890abcdef34"
+      }
+    ],
+    "analysis": {
+      "totalReports": 100,
+      "totalPages": 10,
+      "currentPage": 1,
+      "hasNextPage": true,
+      "hasPreviousPage": false
+    }
+  }
 }
 
-
----
-
-3. Get Incident Media
-
-GET /incidents/media
-
-Response:
-
-
+Error (500):
 {
-  "success": true,
-  "cachedMedia": [ ... ]
+  "success": false,
+  "message": "Error getting reports"
 }
 
+3. Get Nearby Incidents
+Endpoint: GET /api/reports/near
+Description: Retrieves incidents near a specific location within a 1km radius.
+Authentication: Token required in the header.
 
----
-
-4. Get Incident Locations
-
-GET /incidents/locations
-
-Response:
-
-
-{
-  "success": true,
-  "cachedLocations": [ ... ]
-}
-
-
----
-
-5. Filter Incidents by Tags
-
-GET /incidents/filter?tags=tag1,tag2
-
-Query Params: tags=tag1,tag2
+Query Parameters:
+near (string): Comma-separated latitude and longitude (e.g., 8.891288891174664,38.80895765457167) (required).
+timePeriod (number): Time period in milliseconds to filter incidents (optional, default: last 48 hours).
 
 Response:
-
-
-{
-  "success": true,
-  "filteredIncidents": [ ... ]
-}
-
-
----
-
-6. Get Pending Incidents
-
-GET /incidents/pending
-
-Response:
-
-
-{
-  "success": true,
-  "pendingIncidentsCache": [ ... ]
-}
-
-
----
-
-7. Get Nearby Incidents
-
-GET /incidents/near?near=lat,lng
-
-Query Format: near=37.1234,90.5678
-
-Returns incidents within 1km from coordinates
-
-Response:
-
+Success (200):
 
 {
   "success": true,
   "message": "Found incidents in 1km radius",
-  "nearIncidents": [ ... ]
+  "data": [
+    {
+      "_id": "645c0e1234567890abcdef12",
+      "description": "Incident description",
+      "location": {
+        "type": "Point",
+        "coordinates": [38.80895765457167, 8.891288891174664]
+      },
+      "tags": ["tag1", "tag2"]
+    }
+  ]
 }
 
-
----
-
-8. Update Incident Status
-
-PATCH /incidents/:id
-
-Middleware: verifyToken
-
-Body:
-
-
+Error (404):
 {
-  "status": "resolved" | "pending" | etc
+  "success": false,
+  "message": "No recent incidents in 1km radius"
 }
+
+4. Get Report by ID
+Endpoint: GET /api/reports/:id
+Description: Retrieves a specific report by its ID.
+Authentication: Token required in the header.
+Authorization: Admin or campus security roles required.
+
+Request Parameters:
+id (string): The ID of the report to retrieve (required).
+
 
 Response:
-
-
+Success (200):
 {
   "success": true,
-  "newIncident": { ... }
+  "message": "Report retrieved successfully",
+  "data": {
+    "_id": "645c0e1234567890abcdef12",
+    "description": "Incident description",
+    "anonymous": true,
+    "tags": ["tag1", "tag2", "tag3"],
+    "location": {
+      "type": "Point",
+      "coordinates": [38.80895765457167, 8.891288891174664]
+    },
+    "evidenceImage": "https://cloudinary.com/image.jpg",
+    "reporterId": "645b9f1234567890abcdef34"
+  }
 }
 
+Error (404):
+{
+  "success": false,
+  "message": "Report not found"
+}
 
----
+5. Delete a Report
+Endpoint: DELETE /api/reports/:id
+Description: Deletes a specific report by its ID.
+Authentication: Token required in the header.
+Authorization: Admin or campus security roles required.
 
-9. Delete an Incident
+Request Parameters:
+id (string): The ID of the report to delete (required).
+Response:
+Success (200):
+{
+  "success": true,
+  "message": "Report deleted successfully"
+}
+Error (404):
+{
+  "success": false,
+  "message": "Report not found"
+}
+6. Update Report Status
+Endpoint: PATCH /api/reports/:id/status
+Description: Updates the status of a specific report.
+Authentication: Token required in the header.
+Authorization: Admin or campus security roles required.
 
-DELETE /incidents/:id
+Request Parameters:
+id (string): The ID of the report to update (required).
+Request Body:
 
-Middleware: verifyToken, role check (optional)
+
+{
+  "status": "resolved"
+}
+
+status (string): The new status of the report. Must be one of ["resolved", "pending", "rejected"].
 
 Response:
-
-
+Success (200):
 {
-  "success": true
+  "success": true,
+  "message": "Report status updated successfully",
+  "data": {
+    "_id": "645c0e1234567890abcdef12",
+    "status": "resolved"
+  }
 }
 
-
----
-
-Middleware Summary
-
-verifyToken.js: Validates JWT token.
-
-role.middleware.js: (Optional) Use to restrict access by user role.
-
-rateLimiter.js: Limits report submissions per user/IP.
-
-multer.js: Handles image upload to Cloudinary.
-
-
-
----
-
-Models
-
-Incident Model (incidentModel.js)
+Error (400):
 
 {
-  description: String,
-  location: {
-    type: { type: String, enum: ['Point'], required: true },
-    coordinates: [Number],
-  },
-  anonymous: Boolean,
-  reporterId: mongoose.Schema.Types.ObjectId,
-  evidenceImage: String,
-  tags: [String],
-  status: { type: String, default: 'pending' },
-  reportedAt: { type: Date, default: Date.now },
+  "success": false,
+  "message": "Invalid status"
 }
-
-
----
-
-Utils
-
-cacheHelper.js
-
-updateIncidentCache, getIncidentCache, updateSingleCache, deleteCache, loadCacheFromDb
-
-Ensures Redis-like in-memory cache syncing with DB
-
-
-
-
----
-
-Environment Variables (.env)
-
-PORT=5000
-MONGO_URI=your_mongodb_uri
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_secret
-JWT_SECRET=your_jwt_secret
-
-
----
-
-Notes for Frontend Team
-
-All request bodies must be in JSON unless uploading media (then use multipart/form-data).
-
-Always attach the Bearer token.
-
-Image uploads should be compressed client-side if possible.
-
-Use filtering and geolocation wisely to reduce bandwidth.
-
-Expect 404 for invalid routes and 500 for internal errors.
-
-
-
----
-
-> Maintained by SafeCampus Backend Team | 2025
-
-
-
-

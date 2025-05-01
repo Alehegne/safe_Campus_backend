@@ -1,26 +1,17 @@
-const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('./cloudinary');
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("./cloudinaryConfig");
 
+// Set up Cloudinary storage for multer
 const storage = new CloudinaryStorage({
-  cloudinary,
+  cloudinary: cloudinary,
   params: {
-    folder: 'SafeCampus',
-    allowed_formats: ['jpeg', 'jpg', 'png']
+    folder: "reports",
+    allowed_formats: ["jpeg", "jpg", "png"],
+    transformation: [{ width: 500, height: 500, crop: "limit" }],
   },
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 2 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      cb(new Error('Only jpeg, jpg, and png files are allowed'), false);
-    } else {
-      cb(null, true);
-    }
-  }
-});
+const upload = multer({ storage: storage });
 
 module.exports = upload;
