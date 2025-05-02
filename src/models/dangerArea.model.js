@@ -65,6 +65,5 @@ const dangerAreaSchema = new mongoose.Schema(
 );
 
 dangerAreaSchema.index({ location: "2dsphere" });
-dangerAreaSchema.index({ tags: 1 });
 
 module.exports = mongoose.model("DangerArea", dangerAreaSchema);
