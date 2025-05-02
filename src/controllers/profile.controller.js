@@ -8,6 +8,7 @@ const { validateUpdateUser } = require("../utils/validation/user.validator");
 
 async function getProfile(req, res) {
   try {
+    console.log("getting user profile...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -30,6 +31,7 @@ async function getProfile(req, res) {
 
 async function updateProfile(req, res) {
   try {
+    console.log("updating user profile...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -65,6 +67,7 @@ async function updateProfile(req, res) {
 
 async function deleteProfile(req, res) {
   try {
+    console.log("deleting user profile...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);

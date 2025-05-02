@@ -9,6 +9,7 @@ const { generateJwtToken, comparePassword } = require("../utils/helper");
 
 async function registerUser(req, res) {
   try {
+    console.log("registering user...");
     if (!req.body || req.body.length === 0) {
       sendResponse(res, 400, true, "please provide registration information");
     }
@@ -31,7 +32,6 @@ async function registerUser(req, res) {
     // Check if user already exists
     let existingUser = [];
     if (req.body.role === "student") {
-      console.log("std:");
       existingUser = (await getByEmailOrStudentId(email, studentId)) || [];
     } else {
       existingUser = (await findWithEmail(email)) || [];
@@ -45,7 +45,6 @@ async function registerUser(req, res) {
         "User with this email or student id already exists."
       );
     }
-    console.log("passed::");
     const newUser = await saveUser(req.body);
     if (!newUser) {
       return sendResponse(res, 400, false, "User registration failed");
@@ -65,6 +64,7 @@ async function registerUser(req, res) {
 
 async function logInUser(req, res) {
   try {
+    console.log("logging in user...");
     if (!req.body) {
       sendResponse(res, 400, true, "please provide log in information");
     }
@@ -81,7 +81,6 @@ async function logInUser(req, res) {
     }
     // Check if password is correct
     const isMatch = await comparePassword(existing[0].password, password);
-    console.log("ismatch:", isMatch);
     if (!isMatch) {
       return sendResponse(
         res,
@@ -105,7 +104,6 @@ async function logInUser(req, res) {
     const filteredUser = existing[0].toObject();
     delete filteredUser.password;
     delete filteredUser.__v;
-    console.log("filteredUser:", filteredUser);
 
     sendResponse(res, 200, true, "Login successful", {
       token,

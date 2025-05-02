@@ -15,10 +15,10 @@ const {
   delCacheByPrefix,
 } = require("../utils/cache/cacheService");
 const { saveDangerMap } = require("../services/dangerMap.service");
-const { report } = require("../routes/report.route");
 
 async function reportIncident(req, res) {
   try {
+    console.log("reporting incident...");
     const { description, anonymous, tag } = req.body;
     const location = JSON.parse(req.body.location);
     if (!description || !location || !location.coordinates) {
@@ -118,6 +118,7 @@ async function reportIncident(req, res) {
 
 async function getReports(req, res) {
   try {
+    console.log("getting reports...");
     const reportCacheKey = cacheKey.reports(req.query);
     // console.log("reportCacheKey", reportCacheKey);
     // delCache(reportCacheKey); // Clear the cache for reports
@@ -159,6 +160,7 @@ async function getReports(req, res) {
 }
 async function deleteReport(req, res) {
   try {
+    console.log("deleting report...");
     const { id } = req.params;
     const report = await deleteReportService(id);
     if (!report) {
@@ -189,6 +191,7 @@ async function deleteReport(req, res) {
 }
 async function updateReportStatus(req, res) {
   try {
+    console.log("updating report status...");
     const { id } = req.params;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return sendResponse(
@@ -253,6 +256,7 @@ async function updateReportStatus(req, res) {
 
 async function nearIncidents(req, res) {
   try {
+    console.log("getting near incidents...");
     const [lat, lng] = req.query.near.split(",").map(parseFloat);
     if (!lat || !lng) {
       return sendResponse(
@@ -293,6 +297,7 @@ async function nearIncidents(req, res) {
 
 async function getReportById(req, res) {
   try {
+    console.log("getting report by id...");
     const { id } = req.params;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return sendResponse(

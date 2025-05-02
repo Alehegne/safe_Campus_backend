@@ -7,6 +7,7 @@ const {
 
 async function getDangerArea(req, res) {
   try {
+    console.log("getting dangerous area...");
     const dangerArea = await getDangerService(req.query);
     sendResponse(
       res,
@@ -22,6 +23,7 @@ async function getDangerArea(req, res) {
 }
 async function postRiskZone(req, res) {
   try {
+    console.log("creating risk zone...");
     if (!req.body) {
       sendResponse(
         res,
@@ -103,6 +105,7 @@ async function postRiskZone(req, res) {
 }
 async function deleteRiskZone(req, res) {
   try {
+    console.log("deleting risk zone...");
     const { id } = req.params;
     if (!id) {
       sendResponse(

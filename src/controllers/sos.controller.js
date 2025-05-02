@@ -14,6 +14,7 @@ const { decodeToken, getTrackingImage } = require("../utils/helper");
 const { default: mongoose } = require("mongoose");
 async function triggerPanicEvent(req, res) {
   try {
+    console.log("triggering panic event...");
     const { user } = req;
     if (!req.body || req.body.length === 0) {
       return sendResponse(res, 401, false, "invalid request!");
@@ -55,6 +56,7 @@ async function triggerPanicEvent(req, res) {
 }
 async function getAllPanicEvents(req, res) {
   try {
+    console.log("getting all panic events...");
     const response = await getAllEvents(req.query);
 
     const { events, analysis } = response;
@@ -74,6 +76,7 @@ async function getAllPanicEvents(req, res) {
 }
 async function getAllPanicByUserId(req, res) {
   try {
+    console.log("getting all panic events by user id...");
     const { user } = req;
     const { panicEvents, analysis } = await getAllEventByUserId(
       user,
@@ -95,7 +98,7 @@ async function getAllPanicByUserId(req, res) {
 //from the email response, update the acknowledgedBy field in the panic event
 async function responseHandler(req, res) {
   try {
-    // console.log("response handler called!");
+    console.log("response handler called!");
     const token = req.query.token;
     const secret = process.env.RESPONSE_TOKEN_SECRET;
     const decodedToken = decodeToken(token, secret);
@@ -124,7 +127,7 @@ async function responseHandler(req, res) {
 //from email, update the notified contacts
 async function emailViewTracker(req, res) {
   try {
-    // console.log("email view tracker called!");
+    console.log("email view tracker called!");
     const token = req.query.token;
     const secret = process.env.TRACKING_TOKEN_SECRET;
     const decodeToken = decodeToken(token, secret);
@@ -146,6 +149,7 @@ async function emailViewTracker(req, res) {
 
 async function resolvedPanicEvent(req, res) {
   try {
+    console.log("updating resolved panic event...");
     const { eventId } = req.params;
     const { user } = req;
     if (!eventId || mongoose.Types.ObjectId.isValid(eventId)) {
@@ -175,6 +179,7 @@ async function resolvedPanicEvent(req, res) {
 }
 async function updateNotifiedContacts(req, res) {
   try {
+    console.log("updating notified contacts...");
     const { eventId } = req.params;
     const { user } = req;
     if (!eventId) {
@@ -202,6 +207,7 @@ async function updateNotifiedContacts(req, res) {
 //TODO: the front end should send the response of the user,
 async function updateAcknowledgedContacts(req, res) {
   try {
+    console.log("updating acknowledged contacts...");
     const { eventId } = req.params;
     const { user } = req;
     const { response = null } = req.body;

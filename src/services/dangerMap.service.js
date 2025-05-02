@@ -7,7 +7,7 @@ const dangerMap = require("../models/dangerArea.model");
 */
 async function saveDangerMap(data) {
   try {
-    console.log("saving danger map:", data);
+    // console.log("saving danger map:", data);
     const maxd = 100;
     const coordinates = data.location.coordinates;
     //find existi ng danger near 100m , and update reportCount
@@ -26,7 +26,7 @@ async function saveDangerMap(data) {
       .limit(1); // to get the nearest danger map
 
     if (existing && existing.length > 0) {
-      console.log("updating existing dangerous area::");
+      // console.log("updating existing dangerous area::");
       //updating the reportCount
       existing[0].reportCount += 1;
       //marking the severity
@@ -60,7 +60,7 @@ async function saveDangerMap(data) {
       };
     }
     //if not found, create a new dangerMap
-    console.log("creating new danger map:", data);
+    // console.log("creating new danger map:", data);
     const newDangerMap = new dangerMap({
       location: {
         type: "Point",
@@ -75,7 +75,7 @@ async function saveDangerMap(data) {
       lastReportedAt: Date.now(),
     });
     const savedDangerMap = await newDangerMap.save();
-    console.log("new danger map created:", savedDangerMap);
+    // console.log("new danger map created:", savedDangerMap);
     return {
       success: true,
       message: "zone created",

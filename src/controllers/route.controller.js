@@ -4,6 +4,7 @@ const sendResponse = require("../utils/sendResponse");
 // Start a new route
 async function startRoute(req, res) {
   try {
+    console.log("Starting a new route...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -54,6 +55,7 @@ async function startRoute(req, res) {
 // Stop a route
 async function stopRoute(req, res) {
   try {
+    console.log("Stopping the route...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -98,6 +100,7 @@ async function stopRoute(req, res) {
 }
 async function getSharedWithMe(req, res) {
   try {
+    console.log("Getting routes shared with me...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -144,6 +147,7 @@ async function getSharedWithMe(req, res) {
 // Update route location
 async function updateRouteLocation(req, res) {
   try {
+    console.log("Updating route location...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -206,6 +210,7 @@ async function updateRouteLocation(req, res) {
 // Get route status
 async function getRouteStatus(req, res) {
   try {
+    console.log("Getting route status...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -232,6 +237,7 @@ async function getRouteStatus(req, res) {
 // Share route with friends
 async function shareRoute(req, res) {
   try {
+    console.log("Sharing route with friends...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -284,6 +290,7 @@ async function shareRoute(req, res) {
 // Get shared route
 async function getSharedRoute(req, res) {
   try {
+    console.log("Getting shared route...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -314,6 +321,7 @@ async function getSharedRoute(req, res) {
 // Get all routes for a user
 async function getAllUserRoutes(req, res) {
   try {
+    console.log("Getting all user routes...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -340,6 +348,7 @@ async function getAllUserRoutes(req, res) {
 // Update route details
 async function updateRouteDetails(req, res) {
   try {
+    console.log("Updating route details...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
@@ -369,6 +378,7 @@ async function updateRouteDetails(req, res) {
 // Pause route
 async function pauseRoute(req, res) {
   try {
+    console.log("Pausing route...");
     const { user } = req;
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);

@@ -26,7 +26,7 @@ async function getReportService(query) {
       queries.tags = { $in: query.tags.split(",") };
     }
 
-    console.log("Queries:", queries);
+    // console.log("Queries:", queries);
 
     const reports = await incidentModel
       .find(queries)
