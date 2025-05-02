@@ -6,6 +6,7 @@ const sosRoutes = require("./routes/panicAlert.route");
 const sendResponse = require("./utils/sendResponse");
 const routeRoutes = require("./routes/route.route");
 const reportRoutes = require("./routes/report.route");
+const dangerAreaRoutes = require("./routes/dangerArea.route.js");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -15,6 +16,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/routes", routeRoutes);
 app.use("/api/sos", sosRoutes);
 app.use("/api/report", reportRoutes);
+app.use("/api/dangerArea", dangerAreaRoutes);
 
 app.get("/", (req, res) => {
   console.log("welcome to safecampus");

@@ -12,15 +12,14 @@ const uploadImage = require("../utils/uploadImage");
 const cacheKey = require("../utils/cache/cacheKey");
 const {
   getOrSetCache,
-  delCache,
-  getKeysCache,
-  getCache,
   delCacheByPrefix,
 } = require("../utils/cache/cacheService");
+const { saveDangerMap } = require("../services/dangerMap.service");
+const { report } = require("../routes/report.route");
 
 async function reportIncident(req, res) {
   try {
-    const { description, anonymous, tags } = req.body;
+    const { description, anonymous, tag } = req.body;
     const location = JSON.parse(req.body.location);
     if (!description || !location || !location.coordinates) {
       return sendResponse(
@@ -52,12 +51,6 @@ async function reportIncident(req, res) {
         "Coordinates must be an array of two numbers [longitude, latitude]"
       );
     }
-    let tagList;
-    if (tags) {
-      tagList = tags.split(",").map((tag) => tag.trim());
-    } else {
-      tagList = []; // Default to an empty array if no tags are provided
-    }
 
     //upload image to cloudinary
     const evidenceImage = req.file?.path;
@@ -71,7 +64,7 @@ async function reportIncident(req, res) {
       location,
       anonymous,
       evidenceImage: image_url,
-      tags: tagList,
+      tag: tag,
     };
     if (!anonymous && req.user) {
       incidentData.reporterId = req.user.userId;
@@ -92,6 +85,22 @@ async function reportIncident(req, res) {
     // invalidate cache for reports
     //invalidate all caches with the prefix "reports::"
     delCacheByPrefix(cacheKey.reports());
+    // console.log("incidentData:", incident);
+    //save the incident to dangerMap
+    const dangerMapData = {
+      location: {
+        type: "Point",
+        coordinates: coordinates,
+      },
+      severiry: "low",
+      reportCount: 1,
+      source: anonymous ? "anonymous" : incident?.reporterId?.role,
+      status: "active",
+      types: incidentData?.tag,
+      reportId: incident._id,
+      lastReportedAt: Date.now(),
+    };
+    await saveDangerMap(dangerMapData);
 
     return sendResponse(
       res,
