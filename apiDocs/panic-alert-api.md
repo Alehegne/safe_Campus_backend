@@ -2,7 +2,7 @@
 
 ## Base URL
 ```
-/api/panic-alert
+/api/sos
 ```
 
 ## Authentication
