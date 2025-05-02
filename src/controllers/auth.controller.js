@@ -9,7 +9,6 @@ const { generateJwtToken, comparePassword } = require("../utils/helper");
 
 async function registerUser(req, res) {
   try {
-    console.log("registering user:", req.body);
     if (!req.body || req.body.length === 0) {
       sendResponse(res, 400, true, "please provide registration information");
     }
@@ -33,11 +32,11 @@ async function registerUser(req, res) {
     let existingUser = [];
     if (req.body.role === "student") {
       console.log("std:");
-      existingUser = await getByEmailOrStudentId(email, studentId);
+      existingUser = (await getByEmailOrStudentId(email, studentId)) || [];
     } else {
-      existingUser = await findWithEmail(email);
+      existingUser = (await findWithEmail(email)) || [];
     }
-    console.log("existingUser:", existingUser);
+    // console.log("existingUser:", existingUser);
     if (!(existingUser.length === 0)) {
       return sendResponse(
         res,
@@ -46,7 +45,7 @@ async function registerUser(req, res) {
         "User with this email or student id already exists."
       );
     }
-
+    console.log("passed::");
     const newUser = await saveUser(req.body);
     if (!newUser) {
       return sendResponse(res, 400, false, "User registration failed");
