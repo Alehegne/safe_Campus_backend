@@ -1,4 +1,8 @@
-const { profileData, updateUser } = require("../services/profile.service");
+const {
+  profileData,
+  updateUser,
+  deleteUser,
+} = require("../services/profile.service");
 const sendResponse = require("../utils/sendResponse");
 const { validateUpdateUser } = require("../utils/validation/user.validator");
 
