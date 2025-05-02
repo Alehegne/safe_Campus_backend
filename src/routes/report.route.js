@@ -12,7 +12,6 @@ const {
   nearIncidents,
   getReportById,
 } = require("../controllers/report.controller");
-const { default: rateLimit } = require("express-rate-limit");
 
 reportRouter.post(
   "/",
