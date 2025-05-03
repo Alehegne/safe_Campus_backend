@@ -6,6 +6,7 @@ const {
   updateStatus,
   getNearIncidents,
   reportById,
+  reportByUser,
 } = require("../services/report.service");
 const { default: mongoose } = require("mongoose");
 const uploadImage = require("../utils/uploadImage");
@@ -19,7 +20,8 @@ const { saveDangerMap } = require("../services/dangerMap.service");
 async function reportIncident(req, res) {
   try {
     console.log("reporting incident...");
-    const { description, anonymous, tag } = req.body;
+    const { description, tag } = req.body;
+    const anonymous = req.body.anonymous === "true" ? true : false;
     const location = JSON.parse(req.body.location);
     if (!description || !location || !location.coordinates) {
       return sendResponse(
@@ -54,24 +56,31 @@ async function reportIncident(req, res) {
 
     //upload image to cloudinary
     const evidenceImage = req.file?.path;
-    let image_url = null;
-    if (evidenceImage) {
-      image_url = await uploadImage(req.file.mimetype, evidenceImage);
-    }
+    // let image_url = null;
+    // if (evidenceImage) {
+    //   image_url = await uploadImage(req.file.mimetype, evidenceImage);
+    // }
 
     const incidentData = {
       description,
       location,
       anonymous,
-      evidenceImage: image_url,
+      // evidenceImage: image_url,
       tag: tag,
     };
-    if (!anonymous && req.user) {
+    if (!anonymous) {
       incidentData.reporterId = req.user.userId;
     }
 
-    const incident = await saveReport(incidentData);
-    if (!incident) {
+    // const incident = await saveReport(incidentData);
+    //executing both in paralle, for performace
+    const [image_url, incident] = await Promise.allSettled([
+      evidenceImage ? uploadImage(req.file.mimetype, evidenceImage) : null,
+      saveReport(incidentData),
+    ]);
+
+    if (incident.status !== "fulfilled") {
+      console.error("Error saving incident:", incident.reason);
       return sendResponse(
         res,
         500,
@@ -81,10 +90,25 @@ async function reportIncident(req, res) {
         "Error reporting incident"
       );
     }
+    if (image_url.status === "fulfilled") {
+      incident.value.evidenceImage = image_url.value;
+      await incident.value.save();
+    }
+
+    // if (!incident) {
+    //   return sendResponse(
+    //     res,
+    //     500,
+    //     false,
+    //     "Error reporting incident",
+    //     null,
+    //     "Error reporting incident"
+    //   );
+    // }
 
     // invalidate cache for reports
     //invalidate all caches with the prefix "reports::"
-    delCacheByPrefix(cacheKey.reports());
+    // delCacheByPrefix(cacheKey.reports());
     // console.log("incidentData:", incident);
     //save the incident to dangerMap
     const dangerMapData = {
@@ -100,19 +124,55 @@ async function reportIncident(req, res) {
       reportId: incident._id,
       lastReportedAt: Date.now(),
     };
-    await saveDangerMap(dangerMapData);
+    await Promise.allSettled([
+      saveDangerMap(dangerMapData),
+      delCacheByPrefix(cacheKey.reports()),
+    ]);
+    // await saveDangerMap(dangerMapData);
 
     return sendResponse(
       res,
       200,
       true,
       "Incident reported successfully",
-      incident,
+      incident.value,
       "Incident reported successfully"
     );
   } catch (error) {
     console.error("Error reporting incident:", error);
     return sendResponse(res, 500, false, "Error reporting incident");
+  }
+}
+async function getReportByUser(req, res) {
+  try {
+    console.log("getting report by user...");
+    const { user } = req;
+    // console.log("user", user);
+    const query = {
+      reporterId: user.userId,
+    };
+    const reports = await reportByUser(query);
+    if (!reports) {
+      return sendResponse(
+        res,
+        404,
+        false,
+        "No reports found",
+        null,
+        "No reports found"
+      );
+    }
+    return sendResponse(
+      res,
+      200,
+      true,
+      "Reports retrieved successfully",
+      reports,
+      "Reports retrieved successfully"
+    );
+  } catch (error) {
+    console.log("error in getting user by id");
+    sendResponse(res, 500, false, "error in getting user by id");
   }
 }
 
@@ -352,4 +412,5 @@ module.exports = {
   nearIncidents,
   getNearIncidents,
   getReportById,
+  getReportByUser,
 };

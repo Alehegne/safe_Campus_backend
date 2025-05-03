@@ -32,22 +32,8 @@ const incidentSchema = new mongoose.Schema(
     anonymous: { type: Boolean, default: false },
     evidenceImage: String,
     reportedAt: { type: Date, default: Date.now },
-    tags: {
+    tag: {
       type: String,
-      enum: [
-        "theft",
-        "assault",
-        "vandalism",
-        "harassment",
-        "other",
-        "accident",
-        "fire",
-        "flood",
-        "earthquake",
-
-        "storm",
-      ],
-      default: "other",
     },
     status: {
       type: String,

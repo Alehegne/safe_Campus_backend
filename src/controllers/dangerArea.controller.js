@@ -39,7 +39,20 @@ async function postRiskZone(req, res) {
     const { user } = req;
     let location;
     try {
-      location = JSON.parse(req.body.location);
+      if (typeof req.body.location === "String") {
+        location = JSON.parse(req.body.location);
+      } else if (typeof req.body.location === "Object") {
+        location = req.body.location;
+      } else {
+        sendResponse(
+          res,
+          401,
+          false,
+          "please provide a valid json for location",
+          null,
+          "error in parsing location"
+        );
+      }
     } catch (error) {
       sendResponse(
         res,
@@ -51,7 +64,6 @@ async function postRiskZone(req, res) {
       );
     }
 
-    // const { user } = req;
     if (!location || !severity || !types) {
       sendResponse(
         res,
@@ -73,7 +85,7 @@ async function postRiskZone(req, res) {
     ) {
       return sendResponse(
         res,
-        401,
+        400,
         false,
         "please provide correct coordiantes",
         null,

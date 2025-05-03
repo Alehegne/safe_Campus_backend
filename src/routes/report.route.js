@@ -11,6 +11,7 @@ const {
   updateReportStatus,
   nearIncidents,
   getReportById,
+  getReportByUser,
 } = require("../controllers/report.controller");
 
 reportRouter.post(
@@ -30,7 +31,12 @@ quer params:
   - tags: tags of the report (comma separated)
   this endpoint is used to access all reports with different filters
 */
-reportRouter.get("/", verifyToken, getReports);
+reportRouter.get(
+  "/",
+  verifyToken,
+  roleMiddleware("admin", "campus_security"),
+  getReports
+);
 
 //get reports near to a given location, within 1km radius
 //TODO: used by campus security to check for incidents near to them
@@ -40,7 +46,8 @@ reportRouter.get("/", verifyToken, getReports);
 //returns all reports within 1km radius of the given location, within the given time period
 
 reportRouter.get("/near", verifyToken, nearIncidents);
-
+//get report of the user
+reportRouter.get("/user", verifyToken, getReportByUser);
 //get report by id
 reportRouter.get(
   "/:id",

@@ -1,5 +1,6 @@
 function logger(req, res, next) {
   console.log({
+    time: new Date().toISOString(),
     message: "Request received",
     method: req.method,
     url: req.url,

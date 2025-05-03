@@ -10,6 +10,15 @@ async function saveReport(incidentData) {
     throw new Error("Error saving report");
   }
 }
+async function reportByUser(query) {
+  try {
+    const reports = await incidentModel.find(query);
+    return reports;
+  } catch (error) {
+    console.error("Error getting report by user:", error);
+    throw new Error("Error getting report by user");
+  }
+}
 
 async function getReportService(query) {
   try {
@@ -125,4 +134,5 @@ module.exports = {
   updateStatus,
   getNearIncidents,
   reportById,
+  reportByUser,
 };

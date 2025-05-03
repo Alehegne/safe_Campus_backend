@@ -1,7 +1,7 @@
 Report API Documentation
 
 1. Report an Incident
-Endpoint: POST /api/reports
+Endpoint: POST /api/report
 Description: Allows users to report an incident with optional evidence and tags.
 Authentication: Token required in the header.
 
@@ -9,7 +9,8 @@ Request Body:
 {
   "description": "Incident description",
   "anonymous": true,
-  "tags": "tag1,tag2,tag3",
+  "tags": "tag",
+  "image":the actual image
   "location": {
     "type": "Point",
     "coordinates": [38.80895765457167, 8.891288891174664]
@@ -18,7 +19,7 @@ Request Body:
 
 description (string): Description of the incident (required).
 anonymous (boolean): Whether the report is anonymous (optional).
-tags (string): Comma-separated tags for the incident (optional).
+tags (string): single tag(optional).
 location (object): GeoJSON object with type and coordinates (required).
 
 
@@ -32,7 +33,7 @@ Success (200):
     "_id": "645c0e1234567890abcdef12",
     "description": "Incident description",
     "anonymous": true,
-    "tags": ["tag1", "tag2", "tag3"],
+    "tags": "tag1",
     "location": {
       "type": "Point",
       "coordinates": [38.80895765457167, 8.891288891174664]
@@ -75,7 +76,7 @@ Success (200):
         "_id": "645c0e1234567890abcdef12",
         "description": "Incident description",
         "anonymous": true,
-        "tags": ["tag1", "tag2", "tag3"],
+        "tags": "tags",
         "location": {
           "type": "Point",
           "coordinates": [38.80895765457167, 8.891288891174664]
@@ -153,7 +154,7 @@ Success (200):
     "_id": "645c0e1234567890abcdef12",
     "description": "Incident description",
     "anonymous": true,
-    "tags": ["tag1", "tag2", "tag3"],
+    "tags": "tag",
     "location": {
       "type": "Point",
       "coordinates": [38.80895765457167, 8.891288891174664]
