@@ -12,21 +12,21 @@ let ioInstance;
 function initSocket(server) {
   try {
     // Parse allowed origins from environment variable
-    const allowedOrigins = process.env.ALLOWEDORIGINS 
-      ? process.env.ALLOWEDORIGINS.split(',') 
-      : ['http://localhost:3000'];
+    // const allowedOrigins = process.env.ALLOWEDORIGINS
+    //   ? process.env.ALLOWEDORIGINS.split(',')
+    //   : ['http://localhost:3000'];
 
     const io = new Server(server, {
       cors: {
-        origin: process.env.NODE_ENV === "production" ? allowedOrigins : "*",
+        origin: "*",
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-        credentials: true
+        credentials: true,
       },
       // Connection settings
       pingTimeout: 60000, // 60 seconds
       pingInterval: 25000, // 25 seconds
       connectTimeout: 45000, // 45 seconds
-      transports: ['websocket', 'polling']
+      transports: ["websocket", "polling"],
     });
 
     // Global error handling
@@ -35,7 +35,7 @@ function initSocket(server) {
         code: err.code,
         message: err.message,
         req: err.req,
-        context: err.context
+        context: err.context,
       });
     });
 
@@ -43,8 +43,8 @@ function initSocket(server) {
     initSocketEvents(io);
 
     // Create namespaces after middleware setup
-    const routeNamespace = io.of('/routes');
-    
+    const routeNamespace = io.of("/routes");
+
     // Namespace error handling
     routeNamespace.on("connection_error", (err) => {
       console.error("Route namespace connection error:", err);
@@ -52,16 +52,22 @@ function initSocket(server) {
 
     // Connection handling
     io.on("connection", (socket) => {
-      console.log(`Client connected - ID: ${socket.id}, IP: ${socket.handshake.address}`);
+      console.log(
+        `Client connected - ID: ${socket.id}, IP: ${socket.handshake.address}`
+      );
 
       // Handle reconnection
       socket.on("reconnect", (attemptNumber) => {
-        console.log(`Client reconnected - ID: ${socket.id}, Attempt: ${attemptNumber}`);
+        console.log(
+          `Client reconnected - ID: ${socket.id}, Attempt: ${attemptNumber}`
+        );
       });
 
       // Handle disconnection
       socket.on("disconnect", (reason) => {
-        console.log(`Client disconnected - ID: ${socket.id}, Reason: ${reason}`);
+        console.log(
+          `Client disconnected - ID: ${socket.id}, Reason: ${reason}`
+        );
       });
 
       // Handle errors
