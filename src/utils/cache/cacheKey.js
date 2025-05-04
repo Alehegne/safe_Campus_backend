@@ -16,6 +16,7 @@ function serializeFilter(filter = {}) {
 const cacheKey = {
   reports: (filter = {}) => `reports::${serializeFilter(filter)}`,
   reportById: (id) => `report::${id}`,
+  profile: (id) => `profile::${id}`,
 };
 
 module.exports = cacheKey;

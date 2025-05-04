@@ -1,10 +1,29 @@
 function getAdminGuardEmailInfo(userPayload, receiverEmail) {
   const { user } = userPayload;
   const { fullName, studentId, email, phone } = user;
-  const { name, mapUrl } = user.location;
-  const { name: originalName, mapUrl: originalMapUrl } = user.originalLocation;
+  const name = user.location?.name || "Unknown Location";
+  const mapUrl = user.location?.mapUrl || "#";
+  const originalName = user.originalLocation?.name || "Unknown Location";
+  const originalMapUrl = user.originalLocation?.mapUrl || "#";
 
   const subject = "🚨 Security Alert: Immediate Response Required";
+
+  const originalPlaceName = originalName
+    ? `<p><strong>Place:</strong> ${originalName}</p>`
+    : "";
+  const originalMaplocation = originalMapUrl
+    ? `<p><a href="${originalMapUrl}" style="color: #0c5460; text-decoration: underline;">🔗 View Original Location</a></p>`
+    : "";
+  const originalDetail =
+    originalName || originalMapUrl
+      ? `
+        <div style="background-color: #fff; padding: 15px; border-radius: 8px; margin-top: 20px;">
+          <h2 style="color: #721c24;">Original Location</h2>
+          ${originalPlaceName}
+          ${originalMaplocation}
+        </div>
+      `
+      : "";
 
   const text = `
   SECURITY ALERT!
@@ -41,11 +60,7 @@ function getAdminGuardEmailInfo(userPayload, receiverEmail) {
           <p><a href="${mapUrl}" style="color: #0c5460; text-decoration: underline;">🔗 View Current Location</a></p>
         </div>
   
-        <div style="background-color: #fff; padding: 15px; border-radius: 8px; margin-top: 20px;">
-          <h2 style="color: #721c24;">Original Location</h2>
-          <p><strong>Place:</strong> ${originalName}</p>
-          <p><a href="${originalMapUrl}" style="color: #0c5460; text-decoration: underline;">🔗 View Original Location</a></p>
-        </div>
+        ${originalDetail}
   
         <p style="margin-top: 30px; font-size: 14px; color: #555;">Action Required: Dispatch nearest guard or contact the student immediately.</p>
       </div>

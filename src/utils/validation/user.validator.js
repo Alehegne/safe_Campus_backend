@@ -5,7 +5,6 @@ function validateUser(userData) {
     studentId: Joi.string().optional(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
-    deviceToken: Joi.string().required(), // for push notifications using firebase cloud messaging
     fullName: Joi.string().optional(),
     role: Joi.string()
       .valid("student", "admin", "campus_security")

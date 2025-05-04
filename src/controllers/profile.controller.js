@@ -3,6 +3,8 @@ const {
   updateUser,
   deleteUser,
 } = require("../services/profile.service");
+const cacheKey = require("../utils/cache/cacheKey");
+const { getOrSetCache, delCache } = require("../utils/cache/cacheService");
 const sendResponse = require("../utils/sendResponse");
 const { validateUpdateUser } = require("../utils/validation/user.validator");
 
@@ -13,7 +15,15 @@ async function getProfile(req, res) {
     if (!user) {
       return sendResponse(res, 401, false, "Unauthorized", null);
     }
-    const getProfileDetails = await profileData(user.userId);
+    //cache
+    const profileCacheKey = cacheKey.profile(user.userId);
+    // const getProfileDetails = await profileData(user.userId);
+    const getProfileDetails = await getOrSetCache(
+      profileCacheKey,
+      () => profileData(user.userId),
+      5 * 60 // 5 minutes
+    );
+
     if (!getProfileDetails) {
       return sendResponse(res, 404, false, "User not found", null);
     }
@@ -58,6 +68,8 @@ async function updateProfile(req, res) {
     if (!updatedUser) {
       return sendResponse(res, 404, false, "User not found", null);
     }
+    //delete cache
+    delCache(cacheKey.profile(userId));
 
     sendResponse(res, 200, true, "Profile updated successfully", updatedUser);
   } catch (error) {
@@ -78,6 +90,8 @@ async function deleteProfile(req, res) {
     if (!deletedUser) {
       return sendResponse(res, 404, false, "User not found", null);
     }
+    //delete cache
+    delCache(cacheKey.profile(userId));
 
     sendResponse(res, 200, true, "Profile deleted successfully", null);
   } catch (error) {

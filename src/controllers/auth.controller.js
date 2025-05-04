@@ -4,8 +4,10 @@ const {
   saveUser,
   getByEmailOrStudentId,
   findWithEmail,
+  updateTokenService,
 } = require("../services/auth.service");
 const { generateJwtToken, comparePassword } = require("../utils/helper");
+const userModel = require("../models/user.model");
 
 async function registerUser(req, res) {
   try {
@@ -68,9 +70,13 @@ async function logInUser(req, res) {
     if (!req.body) {
       sendResponse(res, 400, true, "please provide log in information");
     }
-    const { email, password } = req.body;
+    const { email, password, deviceToken } = req.body;
     if (!email || !password) {
-      return sendResponse(res, 403, false, "please provide email and password");
+      return sendResponse(res, 400, false, "please provide email and password");
+    }
+    // check if device token is provided
+    if (!deviceToken) {
+      return sendResponse(res, 400, false, "please provide device token");
     }
 
     //
@@ -105,6 +111,14 @@ async function logInUser(req, res) {
     delete filteredUser.password;
     delete filteredUser.__v;
 
+    // Update the user's token in the database
+    const updateToken = await userModel.findByIdAndUpdate(existing[0]._id, {
+      deviceToken: deviceToken,
+    });
+    if (!updateToken) {
+      return sendResponse(res, 400, false, "Failed to update token");
+    }
+
     sendResponse(res, 200, true, "Login successful", {
       token,
       user: {
@@ -117,7 +131,32 @@ async function logInUser(req, res) {
   }
 }
 
+async function updateUserToken(req, res) {
+  try {
+    console.log("updating user token...");
+    const { user } = req;
+    if (!req.body || req.body.length === 0) {
+      return sendResponse(res, 400, false, "Please provide token information");
+    }
+    const { token } = req.body;
+    if (!token) {
+      return sendResponse(res, 400, false, "Please provide a token");
+    }
+    // Update the user's token in the database
+    const updateToken = await updateTokenService(user.userId, token);
+
+    if (!updateToken) {
+      return sendResponse(res, 400, false, "Failed to update token");
+    }
+    sendResponse(res, 200, true, "Token updated successfully");
+  } catch (error) {
+    console.error("Error updating user token:", error);
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
+
 module.exports = {
   registerUser,
   logInUser,
+  updateUserToken,
 };

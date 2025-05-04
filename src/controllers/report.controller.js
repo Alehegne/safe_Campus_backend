@@ -171,8 +171,8 @@ async function getReportByUser(req, res) {
       "Reports retrieved successfully"
     );
   } catch (error) {
-    console.log("error in getting user by id");
-    sendResponse(res, 500, false, "error in getting user by id");
+    console.log("error in getting user report");
+    sendResponse(res, 500, false, "error in getting user report");
   }
 }
 
@@ -236,6 +236,9 @@ async function deleteReport(req, res) {
     // Invalidate the cache for the deleted report
     //will delete a cache with the given id
     delCacheByPrefix(cacheKey.reportById(id));
+    //invalidate the user report cache
+    delCacheByPrefix(cacheKey.reports());
+    //delete the image from cloudinary
     return sendResponse(
       res,
       200,

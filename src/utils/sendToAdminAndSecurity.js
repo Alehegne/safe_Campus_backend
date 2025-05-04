@@ -1,3 +1,4 @@
+const { sendNotification } = require("../services/sendNotification");
 const sendEmail = require("./sendEmail");
 const getAdminGuardEmailInfo = require("./templates/alertOfficial");
 
@@ -16,14 +17,14 @@ async function sendAlertToAdminAndSecurity(
     }
 
     //send FCM to the contact
-    // if (user.deviceToken) {
-    //   sendNotification(
-    //     user.deviceToken,
-    //     "Panic Alert",
-    //     `${userInfo.fullName} is in danger!`,
-    //     userPayLoad
-    //   );
-    // }
+    if (user.deviceToken) {
+      sendNotification(
+        user.deviceToken,
+        "Panic Alert",
+        `${userInfo.fullName} is in danger!`,
+        userPayLoad
+      );
+    }
     //send email to the contact
 
     //send email with view link and response link

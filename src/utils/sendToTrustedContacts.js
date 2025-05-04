@@ -1,4 +1,5 @@
 const { findWithEmail } = require("../services/auth.service");
+const { sendNotification } = require("../services/sendNotification");
 const {
   generateTrackingToken,
   generateResponseToken,
@@ -74,14 +75,14 @@ async function sendAlertToTrustedContacts(
       }
       //send FCM to the contact
       console.log("send FCM to contact", user.email);
-      // if (registered_contact.deviceToken) {
-      //   sendNotification(
-      //     registered_contact.deviceToken,
-      //     "Panic Alert",
-      //     `${userInfo.fullName} is in danger!`,
-      //     userPayLoad
-      //   );
-      // }
+      if (registered_contact.deviceToken) {
+        sendNotification(
+          registered_contact.deviceToken,
+          "Panic Alert",
+          `${userInfo.fullName} is in danger!`,
+          userPayLoad
+        );
+      }
     }
   }
 }

@@ -31,6 +31,20 @@ async function findAdminAndSecurity() {
   return user;
 }
 
+async function updateTokenService(userId, token) {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      deviceToken: token,
+    },
+    {
+      new: true,
+    }
+  );
+
+  return user;
+}
+
 module.exports = {
   saveUser,
   getByEmailOrStudentId,
@@ -38,4 +52,5 @@ module.exports = {
   findWithStudentId,
   findUserById,
   findAdminAndSecurity,
+  updateTokenService,
 };
