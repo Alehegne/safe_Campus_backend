@@ -16,7 +16,7 @@ This API allows authenticated users to start, update, stop, pause, and share rou
 
 ## 🔐 Authentication
 
-All routes require the `verifyToken` middleware. Ensure users are logged in before accessing these endpoints.
+All routes require the `TOKEN` middleware. Ensure users are logged in before accessing these endpoints.
 
 ---
 
