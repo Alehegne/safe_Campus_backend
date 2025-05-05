@@ -64,8 +64,7 @@ async function sendAlertToTrustedContacts(
       }
 
       continue;
-    }
-    if (registered_contact && registered_contact.length > 0) {
+    } else if (registered_contact && registered_contact.length > 0) {
       //FCM or socket.io
       const contactId = registered_contact[0]._id.toString();
       const socketId = onlineUsers[contactId];
