@@ -66,6 +66,38 @@ async function registerUser(req, res) {
   }
 }
 
+async function getTrustedContacts(req, res) {
+  try {
+    console.log("getting trusted contacts...");
+
+    const { user } = req;
+    //get the user trusted contacts from the database
+    const users = await userModel.findById(user.userId);
+    if (!users) {
+      sendResponse(res, 404, false, "User not found", null);
+    }
+    const filteredContacts = users.trustedContacts.map((contact) => {
+      return {
+        name: contact.name,
+        phone: contact.phone,
+        email: contact.email,
+      };
+    });
+    return sendResponse(
+      res,
+      200,
+      true,
+      "Trusted contacts retrieved successfully",
+      {
+        trustedContacts: filteredContacts,
+      }
+    );
+  } catch (error) {
+    console.error("Error getting trusted contacts:", error);
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
+
 async function logInUser(req, res) {
   try {
     console.log("logging in user...");
@@ -261,4 +293,5 @@ module.exports = {
   updateUserToken,
   updateTrustedContacts,
   adminController,
+  getTrustedContacts,
 };
