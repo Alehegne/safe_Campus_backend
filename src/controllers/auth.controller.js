@@ -8,6 +8,8 @@ const {
 } = require("../services/auth.service");
 const { generateJwtToken, comparePassword } = require("../utils/helper");
 const userModel = require("../models/user.model");
+const cacheKey = require("../utils/cache/cacheKey");
+const { delCacheByPrefix } = require("../utils/cache/cacheService");
 
 async function registerUser(req, res) {
   try {
@@ -154,9 +156,109 @@ async function updateUserToken(req, res) {
     sendResponse(res, 500, false, "Server error", null, error.message);
   }
 }
+async function updateTrustedContacts(req, res) {
+  try {
+    const { user } = req;
+    if (!req.body || req.body.length === 0) {
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Please provide trusted contacts information"
+      );
+    }
+    const { contact } = req.body;
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      user.userId,
+      {
+        trustedContacts: {
+          $push: {
+            trustedContacts: contact,
+          },
+        },
+      },
+      { new: true } // Return the updated user
+    );
+
+    if (!updatedUser) {
+      return sendResponse(res, 404, false, "User not found", null);
+    }
+    //filter the passwod and __v
+    const filteredUser = updatedUser.toObject();
+    delete filteredUser.password;
+    delete filteredUser.__v;
+    delete filteredUser.deviceToken;
+    delete filteredUser.createdAt;
+    delete filteredUser.updatedAt;
+    //delete cache
+    delCacheByPrefix(cacheKey.profile(user.userId));
+
+    sendResponse(res, 200, true, "Trusted contacts updated successfully", {
+      user: {
+        ...filteredUser,
+      },
+    });
+  } catch (error) {
+    console.log("Error updating trusted contacts:", error);
+    sendResponse(
+      res,
+      500,
+      false,
+      "Server error while updating trusted contacts",
+      null,
+      error.message
+    );
+  }
+}
+async function adminController(req, res) {
+  try {
+    console.log("admin controller...");
+    if (!req.body || req.body.length === 0) {
+      return sendResponse(res, 400, false, "Please provide information");
+    }
+    const { fullName, email, password, role } = req.body;
+    if (!fullName || !email || !password || !role) {
+      return sendResponse(res, 400, false, "Please provide all fields");
+    }
+    // Check if user already exists
+    const existingUser = await findWithEmail(email);
+    if (existingUser && existingUser.length > 0) {
+      return sendResponse(
+        res,
+        400,
+        false,
+        "User with this email already exists."
+      );
+    }
+    // Check if the role is valid
+    const validRoles = ["admin", "campus_security", "student"];
+    if (!validRoles.includes(role)) {
+      return sendResponse(res, 400, false, "Invalid role provided.");
+    }
+    // Create a new user
+    const newUser = await saveUser({
+      fullName,
+      email,
+      password,
+      role,
+    });
+
+    if (!newUser) {
+      return sendResponse(res, 400, false, "User registration failed");
+    }
+
+    return sendResponse(res, 201, true, "User registered successfully");
+  } catch (error) {
+    console.error("Error in admin controller:", error);
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
 
 module.exports = {
   registerUser,
   logInUser,
   updateUserToken,
+  updateTrustedContacts,
+  adminController,
 };

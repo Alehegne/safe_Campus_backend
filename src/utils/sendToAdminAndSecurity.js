@@ -21,7 +21,7 @@ async function sendAlertToAdminAndSecurity(
       sendNotification(
         user.deviceToken,
         "Panic Alert",
-        `${userInfo.fullName} is in danger!`,
+        `${userPayLoad.user.fullName} is in danger!`,
         userPayLoad
       );
     }

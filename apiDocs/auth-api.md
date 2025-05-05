@@ -12,7 +12,6 @@ Request Body:
   "fullName": "John Doe",
   "email": "johndoe@example.com",
   "password": "password123",
-  "deviceToken": "device_token_123",
   "role": "student",
   "trustedContacts": [
     {
@@ -77,6 +76,8 @@ Authentication: No authentication required.
 Request Body:
 {
   "email": "johndoe@example.com",
+  "deviceToken": "device_token_123",
+
   "password": "password123"
 }
 

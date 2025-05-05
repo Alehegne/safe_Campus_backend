@@ -16,6 +16,7 @@ async function triggerPanicEvent(req, res) {
   try {
     console.log("triggering panic event...");
     const { user } = req;
+    console.log("user:", user);
     if (!req.body || req.body.length === 0) {
       return sendResponse(res, 401, false, "invalid request!");
     }
@@ -37,11 +38,14 @@ async function triggerPanicEvent(req, res) {
         coordinates: location.coordinates,
       },
     };
+    console.log("panic event:", panicEvent);
     const newPanicEvent = await savePanicEvent(panicEvent);
+    console.log("new panic event:", newPanicEvent);
     if (!newPanicEvent) {
       return sendResponse(res, 401, false, "failed to save panic event!");
     }
     await sendPanic(user.userId, location, newPanicEvent._id);
+    console.log("panic event sent to trusted contacts!");
     //save the panic event to the database
 
     // console.log("new event created:", newPanicEvent);
@@ -51,7 +55,13 @@ async function triggerPanicEvent(req, res) {
     });
   } catch (error) {
     console.error("Error triggering panic event:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    return sendResponse(
+      res,
+      500,
+      false,
+      "error in triggering panic event!",
+      error.message
+    );
   }
 }
 async function getAllPanicEvents(req, res) {

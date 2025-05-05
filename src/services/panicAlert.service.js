@@ -7,6 +7,7 @@ const { findUserById, findAdminAndSecurity } = require("./auth.service");
 
 async function sendPanic(userId, location, eventId) {
   //get the user details from the database
+  console.log("sending panic event...");
   const userInfo = await findUserById(userId);
   if (!userInfo) {
     throw new Error("User not found!");
@@ -24,13 +25,17 @@ async function sendPanic(userId, location, eventId) {
   const adminAndGuards = await findAdminAndSecurity();
   const io = getIO();
   const onlineUsers = global.onlineUsers;
+  console.log("online users:", onlineUsers);
   const userPayLoad = getUserPayload(userInfo, location, eventId);
+  console.log("fine:");
+  console.log("userPayLoad:", userPayLoad);
   await sendAlertToTrustedContacts(
     trustedContacts,
     userPayLoad,
     io,
     onlineUsers
   );
+  console.log("alert sent to trusted contacts!");
   await sendAlertToAdminAndSecurity(
     adminAndGuards,
     userPayLoad,
@@ -45,6 +50,13 @@ async function savePanicEvent(panicEvent) {
 }
 
 function getUserPayload(userInfo, location, eventId) {
+  if (typeof location !== "object" || !Array.isArray(location.coordinates)) {
+    throw new Error("Invalid location data provided!");
+  }
+  if (location.coordinates.length !== 2) {
+    throw new Error("Invalid coordinates provided!");
+  }
+
   return {
     eventType: "panicEvent",
     user: {
@@ -59,14 +71,6 @@ function getUserPayload(userInfo, location, eventId) {
         ),
         coordinates: location.coordinates,
         name: location?.address, //assuming we get the address from the frontend
-      },
-      originalLocation: {
-        mapUrl: getGoogleMapURL(
-          userInfo.location.coordinates[1],
-          userInfo.location.coordinates[0]
-        ),
-        coordinates: userInfo.location.coordinates,
-        name: userInfo?.addressDescription,
       },
       panicEventId: eventId,
     },

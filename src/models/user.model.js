@@ -17,7 +17,6 @@ const userSchema = new mongoose.Schema(
       // for push notifications using firebase cloud messaging
       type: String,
       trim: true,
-      required: true,
     },
     fullName: {
       type: String,
@@ -58,21 +57,21 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
-    location: {
-      //
-      type: {
-        type: String,
-        enum: ["Point"],
-      },
-      coordinates: {
-        //[longitude, latitude]
-        type: [Number],
-      },
-    },
-    addressDescription: {
-      type: String, //like Dorm1, Dorm2, etc.
-      trim: true,
-    },
+    // location: {
+    //   //
+    //   type: {
+    //     type: String,
+    //     enum: ["Point"],
+    //   },
+    //   coordinates: {
+    //     //[longitude, latitude]
+    //     type: [Number],
+    //   },
+    // },
+    // addressDescription: {
+    //   type: String, //like Dorm1, Dorm2, etc.
+    //   trim: true,
+    // },
   },
   { timestamps: true }
 );

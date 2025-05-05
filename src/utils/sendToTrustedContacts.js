@@ -13,6 +13,7 @@ async function sendAlertToTrustedContacts(
   io,
   onlineUsers
 ) {
+  console.log("sending alert to trusted contacts...");
   for (const user of trustedContacts) {
     let registered_contact;
     try {
@@ -79,7 +80,7 @@ async function sendAlertToTrustedContacts(
         sendNotification(
           registered_contact.deviceToken,
           "Panic Alert",
-          `${userInfo.fullName} is in danger!`,
+          `${userPayLoad.user.fullName} is in danger!`,
           userPayLoad
         );
       }

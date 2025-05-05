@@ -27,11 +27,11 @@ function initSocketEvents(io) {
 
   // Initialize route socket events
   initRouteSocket(routeNamespace);
- 
+
   // Connection state tracking
   io.on("connection", (socket) => {
     const connectionTime = new Date();
-
+    console.log("Client connected at:", socket.id);
     socket.on("disconnect", (reason) => {
       const duration = new Date() - connectionTime;
       console.log(
