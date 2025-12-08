@@ -1,31 +1,59 @@
-Report API Documentation
+# **Report API Documentation**
 
-1. Report an Incident
-Endpoint: POST /api/report
-Description: Allows users to report an incident with optional evidence and tags.
-Authentication: Token required in the header.
+This API allows users to report incidents, retrieve reports, filter nearby incidents, and manage report statuses. Authentication using a token is required for all endpoints.
 
-Request Body:
+---
+
+## **1. Report an Incident**
+
+### **Endpoint**
+
+```
+POST /api/report
+```
+
+### **Description**
+
+Submit an incident report with optional evidence (image) and tags.
+
+### **Authentication**
+
+Token required in the header.
+
+---
+
+### **Request Body**
+
+```json
 {
   "description": "Incident description",
   "anonymous": true,
   "tags": "tag",
-  "image":the actual image
+  "image": "actual image file",
   "location": {
     "type": "Point",
     "coordinates": [38.80895765457167, 8.891288891174664]
   }
 }
+```
 
-description (string): Description of the incident (required).
-anonymous (boolean): Whether the report is anonymous (optional).
-tags (string): single tag(optional).
-location (object): GeoJSON object with type and coordinates (required).
+### **Request Body Fields**
 
+| Field                  | Type    | Required | Description                                       |
+| ---------------------- | ------- | -------- | ------------------------------------------------- |
+| `description`          | string  | Yes      | Details about the incident.                       |
+| `anonymous`            | boolean | No       | Whether the report hides the reporter's identity. |
+| `tags`                 | string  | No       | A single tag describing the incident.             |
+| `image`                | file    | No       | Evidence image file.                              |
+| `location`             | object  | Yes      | GeoJSON object representing location.             |
+| `location.type`        | string  | Yes      | Must be `"Point"`.                                |
+| `location.coordinates` | array   | Yes      | `[longitude, latitude]`.                          |
 
-Response:
-Success (200):
+---
 
+### **Success Response (200)**
+
+```json
 {
   "success": true,
   "message": "Incident reported successfully",
@@ -42,31 +70,53 @@ Success (200):
     "reporterId": "645b9f1234567890abcdef34"
   }
 }
+```
 
-Error (400):
+### **Error Response (400)**
 
+```json
 {
   "success": false,
   "message": "Incomplete form",
   "error": "Please fill in all required fields"
 }
+```
 
+---
 
-2. Get All Reports
-Endpoint: GET /api/reports
-Description: Retrieves all reports with optional pagination and filtering.
-Authentication: Token required in the header.
+## **2. Get All Reports**
 
-Query Parameters:
-page (number): Page number for pagination (optional, default: 1).
-limit (number): Number of reports per page (optional, default: 15).
-status (string): Filter by report status (pending, resolved, rejected) (optional).
-reporterId (string): Filter by reporter ID (optional).
-tags (string): Filter by tags (comma-separated) (optional).
+### **Endpoint**
 
-Response:
-Success (200):
+```
+GET /api/reports
+```
 
+### **Description**
+
+Retrieve all reports with optional pagination and filters.
+
+### **Authentication**
+
+Token required.
+
+---
+
+### **Query Parameters**
+
+| Parameter    | Type   | Description                                           |
+| ------------ | ------ | ----------------------------------------------------- |
+| `page`       | number | Page number (default: 1).                             |
+| `limit`      | number | Items per page (default: 15).                         |
+| `status`     | string | Filter by status (`pending`, `resolved`, `rejected`). |
+| `reporterId` | string | Filter by user ID.                                    |
+| `tags`       | string | Comma-separated tag filter.                           |
+
+---
+
+### **Success Response (200)**
+
+```json
 {
   "success": true,
   "message": "Reports retrieved successfully",
@@ -94,25 +144,49 @@ Success (200):
     }
   }
 }
+```
 
-Error (500):
+### **Error Response (500)**
+
+```json
 {
   "success": false,
   "message": "Error getting reports"
 }
+```
 
-3. Get Nearby Incidents
-Endpoint: GET /api/reports/near
-Description: Retrieves incidents near a specific location within a 1km radius.
-Authentication: Token required in the header.
+---
 
-Query Parameters:
-near (string): Comma-separated latitude and longitude (e.g., 8.891288891174664,38.80895765457167) (required).
-timePeriod (number): Time period in milliseconds to filter incidents (optional, default: last 48 hours).
+## **3. Get Nearby Incidents**
 
-Response:
-Success (200):
+### **Endpoint**
 
+```
+GET /api/reports/near
+```
+
+### **Description**
+
+Fetch incidents within a 1km radius of a given location.
+
+### **Authentication**
+
+Token required.
+
+---
+
+### **Query Parameters**
+
+| Parameter    | Type   | Required | Description                                           |
+| ------------ | ------ | -------- | ----------------------------------------------------- |
+| `near`       | string | Yes      | `"latitude,longitude"` format.                        |
+| `timePeriod` | number | No       | Time window in milliseconds (default: last 48 hours). |
+
+---
+
+### **Success Response (200)**
+
+```json
 {
   "success": true,
   "message": "Found incidents in 1km radius",
@@ -128,25 +202,52 @@ Success (200):
     }
   ]
 }
+```
 
-Error (404):
+### **Error Response (404)**
+
+```json
 {
   "success": false,
   "message": "No recent incidents in 1km radius"
 }
+```
 
-4. Get Report by ID
-Endpoint: GET /api/reports/:id
-Description: Retrieves a specific report by its ID.
-Authentication: Token required in the header.
-Authorization: Admin or campus security roles required.
+---
 
-Request Parameters:
-id (string): The ID of the report to retrieve (required).
+## **4. Get Report by ID**
 
+### **Endpoint**
 
-Response:
-Success (200):
+```
+GET /api/reports/:id
+```
+
+### **Description**
+
+Retrieve detailed information of a specific report.
+
+### **Authentication**
+
+Token required.
+
+### **Authorization**
+
+Admin or campus security roles only.
+
+---
+
+### **Request Parameters**
+
+| Parameter | Type   | Required | Description |
+| --------- | ------ | -------- | ----------- |
+| `id`      | string | Yes      | Report ID.  |
+
+---
+
+### **Success Response (200)**
+
+```json
 {
   "success": true,
   "message": "Report retrieved successfully",
@@ -163,51 +264,118 @@ Success (200):
     "reporterId": "645b9f1234567890abcdef34"
   }
 }
+```
 
-Error (404):
+### **Error Response (404)**
+
+```json
 {
   "success": false,
   "message": "Report not found"
 }
+```
 
-5. Delete a Report
-Endpoint: DELETE /api/reports/:id
-Description: Deletes a specific report by its ID.
-Authentication: Token required in the header.
-Authorization: Admin or campus security roles required.
+---
 
-Request Parameters:
-id (string): The ID of the report to delete (required).
-Response:
-Success (200):
+## **5. Delete a Report**
+
+### **Endpoint**
+
+```
+DELETE /api/reports/:id
+```
+
+### **Description**
+
+Delete a specific report by its ID.
+
+### **Authentication**
+
+Token required.
+
+### **Authorization**
+
+Admin or campus security only.
+
+---
+
+### **Request Parameters**
+
+| Parameter | Type   | Required | Description       |
+| --------- | ------ | -------- | ----------------- |
+| `id`      | string | Yes      | ID of the report. |
+
+---
+
+### **Success Response (200)**
+
+```json
 {
   "success": true,
   "message": "Report deleted successfully"
 }
-Error (404):
+```
+
+### **Error Response (404)**
+
+```json
 {
   "success": false,
   "message": "Report not found"
 }
-6. Update Report Status
-Endpoint: PATCH /api/reports/:id/status
-Description: Updates the status of a specific report.
-Authentication: Token required in the header.
-Authorization: Admin or campus security roles required.
+```
 
-Request Parameters:
-id (string): The ID of the report to update (required).
-Request Body:
+---
 
+## **6. Update Report Status**
 
+### **Endpoint**
+
+```
+PATCH /api/reports/:id/status
+```
+
+### **Description**
+
+Update the status of an incident report.
+
+### **Authentication**
+
+Token required.
+
+### **Authorization**
+
+Admin or campus security only.
+
+---
+
+### **Request Parameters**
+
+| Parameter | Type   | Required | Description |
+| --------- | ------ | -------- | ----------- |
+| `id`      | string | Yes      | Report ID.  |
+
+---
+
+### **Request Body**
+
+```json
 {
   "status": "resolved"
 }
+```
 
-status (string): The new status of the report. Must be one of ["resolved", "pending", "rejected"].
+### **Allowed Status Values**
 
-Response:
-Success (200):
+* `resolved`
+* `pending`
+* `rejected`
+
+---
+
+### **Success Response (200)**
+
+```json
 {
   "success": true,
   "message": "Report status updated successfully",
@@ -216,10 +384,14 @@ Success (200):
     "status": "resolved"
   }
 }
+```
 
-Error (400):
+### **Error Response (400)**
 
+```json
 {
   "success": false,
   "message": "Invalid status"
 }
+```
+
