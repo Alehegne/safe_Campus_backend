@@ -1,12 +1,30 @@
-Authentication API Documentation
-The auth API allows users to register and log in to the system. It supports student registration and login functionality.
+# Authentication API Documentation
 
-1. Register a User
-Endpoint: POST /api/auth/register
-Description: Allows students to register for the system.
-Authentication: No authentication required.
+The Authentication API allows users (specifically students) to register and log in to the system. It handles account creation, login, and trusted contact information.
 
-Request Body:
+---
+
+## **1. Register a User**
+
+### **Endpoint**
+
+```
+POST /api/auth/register
+```
+
+### **Description**
+
+Creates a new user (student) in the system.
+
+### **Authentication**
+
+No authentication required.
+
+---
+
+### **Request Body**
+
+```json
 {
   "studentId": "123456",
   "fullName": "John Doe",
@@ -27,26 +45,35 @@ Request Body:
   },
   "addressDescription": "Dorm 1"
 }
+```
 
-Request Body Fields:
-studentId (string): The student ID (required for students).
-fullName (string): The full name of the user (optional).
-email (string): The email address of the user (required).
-password (string): The password for the user account (required).
-deviceToken (string): The device token for push notifications (required).
-role (string): The role of the user. Must be "student" (default: "student").
-trustedContacts (array): An array of trusted contacts (optional).
-name (string): Name of the trusted contact.
-phone (string): Phone number of the trusted contact (required).
-email (string): Email address of the trusted contact (required).
-relationShip (string): Relationship with the user (friend, roommate, colleague, other).
-location (object): GeoJSON object for the user's location (optional).
-type (string): Must be "Point".
-coordinates (array): Array of two numbers [longitude, latitude].
-addressDescription (string): Description of the user's address (optional).
-Response:
-Success (201):
+---
 
+### **Request Body Fields**
+
+| Field                            | Type   | Required | Description                                           |
+| -------------------------------- | ------ | -------- | ----------------------------------------------------- |
+| `studentId`                      | string | Yes      | Unique student identifier.                            |
+| `fullName`                       | string | Optional | Full name of the student.                             |
+| `email`                          | string | Yes      | User email. Must be unique.                           |
+| `password`                       | string | Yes      | Password for user account.                            |
+| `deviceToken`                    | string | Yes      | Token used for push notifications.                    |
+| `role`                           | string | Optional | User role. Must be `"student"`. Default: `"student"`. |
+| `trustedContacts`                | array  | Optional | Array of trusted contact objects.                     |
+| `trustedContacts[].name`         | string | Yes      | Contact name.                                         |
+| `trustedContacts[].phone`        | string | Yes      | Contact phone number.                                 |
+| `trustedContacts[].email`        | string | Yes      | Contact email.                                        |
+| `trustedContacts[].relationShip` | string | Yes      | Relationship type (friend, roommate, etc.).           |
+| `location`                       | object | Optional | GeoJSON location.                                     |
+| `location.type`                  | string | Yes      | Must be `"Point"`.                                    |
+| `location.coordinates`           | array  | Yes      | Coordinates in `[longitude, latitude]`.               |
+| `addressDescription`             | string | Optional | Short description of the user’s address.              |
+
+---
+
+### **Success Response (201)**
+
+```json
 {
   "success": true,
   "message": "User registered successfully",
@@ -57,35 +84,72 @@ Success (201):
     "role": "student"
   }
 }
-Error (400):
+```
+
+### **Error Responses**
+
+#### **400 - Duplicate User**
+
+```json
 {
   "success": false,
   "message": "User with this email or student id already exists."
 }
-Error (500):
+```
+
+#### **500 - Server Error**
+
+```json
 {
   "success": false,
   "message": "Server error"
 }
+```
 
-2. Log In a User
-Endpoint: POST /api/auth/login
-Description: Allows users to log in to the system.
-Authentication: No authentication required.
+---
 
-Request Body:
+## **2. Log In a User**
+
+### **Endpoint**
+
+```
+POST /api/auth/login
+```
+
+### **Description**
+
+Allows a user to log in using email and password.
+
+### **Authentication**
+
+Not required.
+
+---
+
+### **Request Body**
+
+```json
 {
   "email": "johndoe@example.com",
   "deviceToken": "device_token_123",
-
   "password": "password123"
 }
+```
 
-Request Body Fields:
-email (string): The email address of the user (required).
-password (string): The password for the user account (required).
-Response:
-Success (200):
+---
+
+### **Request Body Fields**
+
+| Field      | Type   | Required | Description         |
+| ---------- | ------ | -------- | ------------------- |
+| `email`    | string | Yes      | User email address. |
+| `password` | string | Yes      | User password.      |
+
+---
+
+### **Success Response (200)**
+
+```json
 {
   "success": true,
   "message": "Login successful",
@@ -113,20 +177,37 @@ Success (200):
     }
   }
 }
+```
 
-Error (401):
+---
+
+### **Error Responses**
+
+#### **401 – User Not Registered**
+
+```json
 {
   "success": false,
   "message": "please register first"
 }
-Error (403):
+```
 
+#### **403 – Missing Credentials**
+
+```json
 {
   "success": false,
   "message": "please provide email and password"
 }
-Error (500):
+```
+
+#### **500 – Server Error**
+
+```json
 {
   "success": false,
   "message": "Server error"
 }
+```
+
+---
