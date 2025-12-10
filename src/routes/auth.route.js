@@ -6,6 +6,8 @@ const {
   updateUserToken,
   updateTrustedContacts,
   getTrustedContacts,
+  refrehToken,
+  addTrustedContacts,
 } = require("../controllers/auth.controller");
 const multer = require("multer");
 const roleMiddleware = require("../middleware/role.middleware");
@@ -22,9 +24,18 @@ authRouter.patch(
   verifyToken,
   updateTrustedContacts
 );
+//add trusted contacts
+authRouter.post(
+  "/add_contacts",
+  upload.none(),
+  verifyToken,
+  addTrustedContacts
+);
 
 //get trusted contacts
 authRouter.get("/get_contacts", verifyToken, getTrustedContacts);
+//refresh token
+authRouter.post("/refresh",refrehToken);
 
 //admin controller
 
