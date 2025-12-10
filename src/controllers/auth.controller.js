@@ -15,7 +15,7 @@ async function registerUser(req, res) {
   try {
     console.log("registering user...");
     if (!req.body || req.body.length === 0) {
-      sendResponse(res, 400, true, "please provide registration information");
+      sendResponse(res, 400, false, "please provide registration information");
     }
     //only register students
     // if (req.body.role === "admin" || req.body.role === "campus_security") {
@@ -109,9 +109,10 @@ async function logInUser(req, res) {
       return sendResponse(res, 400, false, "please provide email and password");
     }
     // check if device token is provided
-    if (!deviceToken) {
-      return sendResponse(res, 400, false, "please provide device token");
-    }
+    //TODO: enable device token later
+    // if (!deviceToken) {
+    //   return sendResponse(res, 400, false, "please provide device token");
+    // }
 
     //
     const existing = await findWithEmail(email);
