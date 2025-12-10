@@ -16,7 +16,7 @@ function generateResponseToken(
     role,
     name,
     type: "response",
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24h expiry
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 24 * 24, // 24 days expiry
   };
 
   return jwt.sign(payload, RESPONSE_SECRET);
@@ -29,7 +29,7 @@ function generateTrackingToken(email, eventId, role = "student", name = "") {
     eventId,
     role,
     name,
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24h expiry
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 24 * 24, // 24 days expiry
   };
 
   return jwt.sign(payload, RESPONSE_SECRET);

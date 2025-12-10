@@ -5,7 +5,6 @@ const {
   logInUser,
   updateUserToken,
   updateTrustedContacts,
-  adminController,
   getTrustedContacts,
 } = require("../controllers/auth.controller");
 const multer = require("multer");
@@ -29,15 +28,15 @@ authRouter.get("/get_contacts", verifyToken, getTrustedContacts);
 
 //admin controller
 
-authRouter.post(
-  "/admin",
-  upload.none(),
-  verifyToken,
-  roleMiddleware("admin"),
-  adminController
-);
+// authRouter.post(
+//   "/admin",
+//   upload.none(),
+//   verifyToken,
+//   roleMiddleware("admin"),
+//   adminController
+// );
 
 // authRouter.
-// authRouter.post("/logout", logoutUser);// just delete the token in the frontend,
+// authRouter.post("/logout", logoutUser); // just delete the token in the frontend,
 
 module.exports = authRouter;

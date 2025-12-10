@@ -287,7 +287,6 @@ async function adminController(req, res) {
     sendResponse(res, 500, false, "Server error", null, error.message);
   }
 }
-
 module.exports = {
   registerUser,
   logInUser,

@@ -24,6 +24,8 @@ app.use("/api/report", reportRoutes);
 app.use("/api/dangerArea", dangerAreaRoutes);
 // user management routes
 app.use("/api/users", userManagementRoutes);
+//admin anayltics
+app.use("/api/admin", require("./routes/admin.route"));
 
 app.get("/", (req, res) => {
   console.log("welcome to safecampus");
