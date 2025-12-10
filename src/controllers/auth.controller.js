@@ -10,6 +10,8 @@ const { generateJwtToken, comparePassword } = require("../utils/helper");
 const userModel = require("../models/user.model");
 const cacheKey = require("../utils/cache/cacheKey");
 const { delCacheByPrefix } = require("../utils/cache/cacheService");
+const jwt = require("jsonwebtoken");
+
 
 async function registerUser(req, res) {
   try {
@@ -62,6 +64,42 @@ async function registerUser(req, res) {
     });
   } catch (error) {
     console.error("Register error:", error);
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
+
+//add trusted contacts
+async function addTrustedContacts(req, res) {
+  try {
+    console.log("adding trusted contacts...");
+    const { user } = req;
+    if (!req.body || req.body.length === 0) {
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Please provide trusted contacts information"
+      );
+    }
+    //get contacts array from body
+    const { contacts } = req.body;
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      user.userId,
+      {
+        $push: {
+          trustedContacts: { $each: contacts },
+        },
+      },
+      { new: true } // Return the updated user
+    );
+    if (!updatedUser) {
+      return sendResponse(res, 404, false, "User not found", null);
+    }
+    sendResponse(res, 200, true, "Trusted contacts added successfully");
+    
+  } catch (error) {
+    console.error("Error adding trusted contacts:", error);
     sendResponse(res, 500, false, "Server error", null, error.message);
   }
 }
@@ -138,6 +176,10 @@ async function logInUser(req, res) {
       email: existing[0].email,
     };
     const token = generateJwtToken(payload);
+    //generate refresh token
+    const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRATION,
+    });
     if (!token) {
       return sendResponse(res, 401, false, "Invalid credentials");
     }
@@ -156,6 +198,7 @@ async function logInUser(req, res) {
 
     sendResponse(res, 200, true, "Login successful", {
       token,
+      refreshToken,
       user: {
         ...filteredUser,
       },
@@ -287,6 +330,32 @@ async function adminController(req, res) {
     sendResponse(res, 500, false, "Server error", null, error.message);
   }
 }
+async function refrehToken(req, res) {
+  try {
+    console.log("refreshing token...");
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return sendResponse(res, 400, false, "Please provide refresh token");
+    }
+    //verify token
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    if (!decoded) {
+      return sendResponse(res, 401, false, "Invalid refresh token");
+    }
+    const payload = {
+      userId: decoded.userId,
+      role: decoded.role,
+      studentId: decoded.studentId,
+  }
+    const newToken = generateJwtToken(payload);
+    return sendResponse(res, 200, true, "Token refreshed successfully", {
+      token: newToken,
+    });
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
 module.exports = {
   registerUser,
   logInUser,
@@ -294,4 +363,5 @@ module.exports = {
   updateTrustedContacts,
   adminController,
   getTrustedContacts,
+  refrehToken,
 };
