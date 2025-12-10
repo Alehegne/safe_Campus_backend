@@ -10,4 +10,5 @@ adminRouter.get(
   anaylticsController
 );
 
+
 module.exports = adminRouter;
