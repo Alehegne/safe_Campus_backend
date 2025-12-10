@@ -5,8 +5,8 @@ const { anaylticsController } = require("../controllers/admin.controller");
 
 adminRouter.get(
   "/analytics",
-  verifyToken,
-  roleMiddleware("admin"),
+  // verifyToken,
+  // roleMiddleware("admin"),
   anaylticsController
 );
 
