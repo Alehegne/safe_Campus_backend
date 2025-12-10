@@ -36,6 +36,7 @@ authRouter.post(
   roleMiddleware("admin"),
   adminController
 );
+
 // authRouter.
 // authRouter.post("/logout", logoutUser);// just delete the token in the frontend,
 
