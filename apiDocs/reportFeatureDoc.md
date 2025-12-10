@@ -367,9 +367,9 @@ Admin or campus security only.
 
 ### **Allowed Status Values**
 
-* `resolved`
-* `pending`
-* `rejected`
+- `resolved`
+- `pending`
+- `rejected`
 
 ---
 
@@ -394,4 +394,3 @@ Admin or campus security only.
   "message": "Invalid status"
 }
 ```
-

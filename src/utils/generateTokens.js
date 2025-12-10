@@ -2,6 +2,9 @@ const jwt = require("jsonwebtoken");
 
 const RESPONSE_SECRET = process.env.RESPONSE_TOKEN_SECRET;
 
+// 1 DAY EXPIRY
+const ONE_DAY = "1d";
+
 function generateResponseToken(
   email,
   eventId,
@@ -16,10 +19,9 @@ function generateResponseToken(
     role,
     name,
     type: "response",
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24*24*24, // 24h expiry
   };
 
-  return jwt.sign(payload, RESPONSE_SECRET);
+  return jwt.sign(payload, RESPONSE_SECRET, { expiresIn: ONE_DAY });
 }
 
 function generateTrackingToken(email, eventId, role = "student", name = "") {
@@ -29,13 +31,15 @@ function generateTrackingToken(email, eventId, role = "student", name = "") {
     eventId,
     role,
     name,
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24*24*24, // 24h expiry
   };
 
-  return jwt.sign(payload, RESPONSE_SECRET);
+  return jwt.sign(payload, RESPONSE_SECRET, { expiresIn: ONE_DAY });
 }
 
-function getAdminTokens(userPayload, user) {}
+function getAdminTokens(userPayload, user) {
+  // Add later if needed
+}
+
 function getGuardTokens(userPayload, user) {
   const trackingToken = generateTrackingToken(
     user.email,
@@ -43,6 +47,8 @@ function getGuardTokens(userPayload, user) {
     user.role,
     user.fullName
   );
+
+  return { trackingToken };
 }
 
 module.exports = {

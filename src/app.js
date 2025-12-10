@@ -7,6 +7,7 @@ const sendResponse = require("./utils/sendResponse");
 const routeRoutes = require("./routes/route.route");
 const reportRoutes = require("./routes/report.route");
 const dangerAreaRoutes = require("./routes/dangerArea.route.js");
+const userManagementRoutes = require("./routes/userManagement.route.js");
 const logger = require("./middleware/globalLogger.js");
 
 app.use(express.json());
@@ -21,6 +22,10 @@ app.use("/api/routes", routeRoutes);
 app.use("/api/sos", sosRoutes);
 app.use("/api/report", reportRoutes);
 app.use("/api/dangerArea", dangerAreaRoutes);
+// user management routes
+app.use("/api/users", userManagementRoutes);
+//admin anayltics
+app.use("/api/admin", require("./routes/admin.route"));
 
 app.get("/", (req, res) => {
   console.log("welcome to safecampus");
