@@ -333,7 +333,7 @@ async function adminController(req, res) {
 async function refrehToken(req, res) {
   try {
     console.log("refreshing token...");
-    const { refreshToken } = req.body;
+    const  refreshToken  = req.body.refresh_token;
     if (!refreshToken) {
       return sendResponse(res, 400, false, "Please provide refresh token");
     }
@@ -348,6 +348,7 @@ async function refrehToken(req, res) {
       studentId: decoded.studentId,
   }
     const newToken = generateJwtToken(payload);
+    console.log("done refreshing token!")
     return sendResponse(res, 200, true, "Token refreshed successfully", {
       token: newToken,
     });
@@ -364,4 +365,5 @@ module.exports = {
   adminController,
   getTrustedContacts,
   refrehToken,
+  addTrustedContacts
 };
