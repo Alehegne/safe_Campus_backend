@@ -1,4 +1,5 @@
 const alertsRouter = require("express").Router();
+const roleMiddleware = require("../middleware/role.middleware");
 const verifyToken = require("../middleware/verifyToken");
 const AlertsModel = require("../models/alerts.model");
 const sendResponse = require("../utils/sendResponse");
@@ -24,10 +25,29 @@ async function getAnnouncements(req,res){
          return sendResponse()
     }
 }
+async function createAlert(req,res){
+
+    try {
+        const {title,content,status,type} = req.body;
+        const newAlert = new AlertsModel({
+            title,
+            content,
+            status,
+            type
+        });
+        await newAlert.save();
+        return sendResponse(res,201,true,"Alert created successfully",newAlert,null);
+    } catch (error) {
+         return sendResponse(res,500,false,"server error",null,null)
+    }
+}
+
 
 
 alertsRouter.get("/alerts",verifyToken, getAlerts);
 alertsRouter.get("/announcements",verifyToken,getAnnouncements);
+alertsRouter.post("/alerts",verifyToken,roleMiddleware("admin"),createAlert);
+
 
 
 module.exports = alertsRouter;
