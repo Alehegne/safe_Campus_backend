@@ -30,7 +30,10 @@ const incidentSchema = new mongoose.Schema(
       },
     },
     anonymous: { type: Boolean, default: false },
-    evidenceImage: String,
+    evidenceImage: {
+      type:String,
+      required:false
+    },
     reportedAt: { type: Date, default: Date.now },
     tag: {
       type: String,

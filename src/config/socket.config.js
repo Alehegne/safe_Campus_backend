@@ -1,6 +1,7 @@
 // src/config/socket.js
 const { Server } = require("socket.io");
 const initSosSocket = require("../sockets/sos.socket");
+const socketAuth = require("../sockets/middleware/socket.auth");
 
 let ioInstance;
 
@@ -12,6 +13,8 @@ function initSocket(server) {
     },
     transports: ["websocket", "polling"],
   });
+
+  io.use(socketAuth);
 
   //Global error handling
   io.engine.on("connection_error", (err) => {

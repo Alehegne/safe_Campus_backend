@@ -422,4 +422,5 @@ module.exports = {
   getTrustedContacts,
   refrehToken,
   addTrustedContacts,
+  deleteTrustedContacts
 };
