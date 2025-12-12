@@ -2,6 +2,10 @@ const { default: mongoose } = require("mongoose");
 
 const dangerAreaSchema = new mongoose.Schema(
   {
+    zoneName: {
+      type: String,
+      required: false,
+    },
     location: {
       type: {
         type: String,
