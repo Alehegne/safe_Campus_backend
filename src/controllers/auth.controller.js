@@ -11,8 +11,6 @@ const userModel = require("../models/user.model");
 const cacheKey = require("../utils/cache/cacheKey");
 const { delCacheByPrefix } = require("../utils/cache/cacheService");
 const jwt = require("jsonwebtoken");
-
-
 async function registerUser(req, res) {
   try {
     console.log("registering user...");
@@ -97,7 +95,6 @@ async function addTrustedContacts(req, res) {
       return sendResponse(res, 404, false, "User not found", null);
     }
     sendResponse(res, 200, true, "Trusted contacts added successfully");
-    
   } catch (error) {
     console.error("Error adding trusted contacts:", error);
     sendResponse(res, 500, false, "Server error", null, error.message);
@@ -142,24 +139,28 @@ async function logInUser(req, res) {
     if (!req.body) {
       sendResponse(res, 400, true, "please provide log in information");
     }
+    console.log("req.body:", req.body);
     const { email, password, deviceToken } = req.body;
+    console.log("email:", email);
     if (!email || !password) {
       return sendResponse(res, 400, false, "please provide email and password");
     }
-    // check if device token is provided
+    //check if device token is provided
     //TODO: enable device token later
-    // if (!deviceToken) {
-    //   return sendResponse(res, 400, false, "please provide device token");
-    // }
+    /*     if (!deviceToken) {
+      console.log("Device token not provided");
+      return sendResponse(res, 400, false, "please provide device token");
+    } */
 
     //
     const existing = await findWithEmail(email);
-
+    console.log("existing user:", existing);
     if (!existing || existing.length === 0) {
-      return sendResponse(res, 401, "please register first");
+      return sendResponse(res, 404, false, "please register first");
     }
     // Check if password is correct
     const isMatch = await comparePassword(existing[0].password, password);
+    console.log("Password match status:", isMatch);
     if (!isMatch) {
       return sendResponse(
         res,
@@ -168,6 +169,7 @@ async function logInUser(req, res) {
         "please enter the correct password!"
       );
     }
+    console.log("User authenticated successfully");
     // Generate JWT token
     const payload = {
       userId: existing[0]._id,
@@ -180,8 +182,9 @@ async function logInUser(req, res) {
     const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRATION,
     });
+    console.log("Generated tokens for user");
     if (!token) {
-      return sendResponse(res, 401, false, "Invalid credentials");
+      return sendResponse(res, 500, false, "Failed to generate token");
     }
     //filter
     const filteredUser = existing[0].toObject();
@@ -195,7 +198,7 @@ async function logInUser(req, res) {
     if (!updateToken) {
       return sendResponse(res, 400, false, "Failed to update token");
     }
-
+    console.log("User logged in successfully");
     sendResponse(res, 200, true, "Login successful", {
       token,
       refreshToken,
@@ -340,13 +343,13 @@ async function refrehToken(req, res) {
     //verify token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
     if (!decoded) {
-      return sendResponse(res, 401, false, "Invalid refresh token");
+      return sendResponse(res, 400, false, "Invalid refresh token");
     }
     const payload = {
       userId: decoded.userId,
       role: decoded.role,
       studentId: decoded.studentId,
-  }
+    };
     const newToken = generateJwtToken(payload);
     return sendResponse(res, 200, true, "Token refreshed successfully", {
       token: newToken,
@@ -364,4 +367,5 @@ module.exports = {
   adminController,
   getTrustedContacts,
   refrehToken,
+  addTrustedContacts,
 };

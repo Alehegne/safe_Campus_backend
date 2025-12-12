@@ -7,135 +7,167 @@ const {
 
 async function getDangerArea(req, res) {
   try {
-    console.log("getting dangerous area...");
+    console.log("Getting dangerous area...");
     const dangerArea = await getDangerService(req.query);
     sendResponse(
       res,
       200,
       true,
-      "successfully fetched dangerous area",
+      "Successfully fetched dangerous area",
       dangerArea
     );
   } catch (error) {
-    console.log("error in fetching dangerous area");
-    sendResponse(res, 400, false, "error in fetching dangerous area");
+    console.error("Error in fetching dangerous area:", error.message);
+    sendResponse(
+      res,
+      400,
+      false,
+      "Failed to fetch dangerous area",
+      null,
+      error.message
+    );
   }
 }
+
 async function postRiskZone(req, res) {
   try {
-    console.log("creating risk zone...");
-    if (!req.body) {
-      sendResponse(
-        res,
-        401,
-        false,
-        "request body is empty",
-        null,
-        "request body is empty"
-      );
-      return;
+    console.log("Creating risk zone...");
+
+    // Validate request body
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return sendResponse(res, 400, false, "Request body is empty");
     }
+
     const { severity, types } = req.body;
     const { user } = req;
+
+    // Parse and validate location
     let location;
-    try {
-      if (typeof req.body.location === "String") {
+    if (typeof req.body.location === "string") {
+      try {
         location = JSON.parse(req.body.location);
-      } else if (typeof req.body.location === "Object") {
-        location = req.body.location;
-      } else {
-        sendResponse(
-          res,
-          401,
-          false,
-          "please provide a valid json for location",
-          null,
-          "error in parsing location"
-        );
+      } catch (parseError) {
+        return sendResponse(res, 400, false, "Invalid location JSON format");
       }
-    } catch (error) {
-      sendResponse(
+    } else if (req.body.location && typeof req.body.location === "object") {
+      location = req.body.location;
+    } else {
+      return sendResponse(
         res,
-        401,
+        400,
         false,
-        "please provide a valid json for location",
-        null,
-        "error in parsing location"
+        "Location must be a valid JSON object"
       );
     }
 
-    if (!location || !severity || !types) {
-      sendResponse(
+    // Validate required fields
+    if (!location || !severity) {
+      return sendResponse(
         res,
-        401,
+        400,
         false,
-        "provide neccessary fields",
-        null,
-        "provide neccessary fileds"
+        "Missing required fields: location and severity are required"
       );
     }
-    const coordinates = [
-      parseFloat(location.coordinates[0]),
-      parseFloat(location.coordinates[1]),
-    ];
+
+    // Validate coordinates
+    if (!location.coordinates || !Array.isArray(location.coordinates)) {
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Invalid location format: coordinates array is required"
+      );
+    }
+
+    const [lon, lat] = location.coordinates;
+    const coordinates = [parseFloat(lon), parseFloat(lat)];
+
+    if (coordinates.some((coord) => isNaN(coord) || coord === null)) {
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Invalid coordinates: must be valid numbers"
+      );
+    }
+
+    // Validate latitude/longitude ranges (optional but recommended)
     if (
-      !location.coordinates ||
-      isNaN(coordinates[0]) ||
-      isNaN(coordinates[1])
+      coordinates[0] < -180 ||
+      coordinates[0] > 180 ||
+      coordinates[1] < -90 ||
+      coordinates[1] > 90
     ) {
       return sendResponse(
         res,
         400,
         false,
-        "please provide correct coordiantes",
-        null,
-        "provide correct coordiantes"
+        "Invalid coordinates: longitude must be between -180 and 180, latitude between -90 and 90"
       );
     }
 
+    // Prepare data with correct field names
     const data = {
-      location,
-      severiry: severity,
-      types,
-      // source: user.role,
-      source: user.role,
+      location: {
+        type: location.type || "Point",
+        coordinates: coordinates,
+      },
+      severity: severity,
+      types: types || [],
+      source: user?.role || "user",
       status: "active",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
+
     const savedRisk = await saveRiskZone(data);
     return sendResponse(
       res,
-      200,
+      201, // Use 201 for resource creation
       true,
-      "risk zone successfully saved",
-      savedRisk,
-      null
+      "Risk zone successfully created",
+      savedRisk
     );
   } catch (error) {
-    console.log("error in creating ris zone");
-    sendResponse(res, 400, false, "error in creating risk zone ");
+    console.error("Error in creating risk zone:", error.message);
+    sendResponse(
+      res,
+      500,
+      false,
+      "Failed to create risk zone",
+      null,
+      process.env.NODE_ENV === "development" ? error.message : null
+    );
   }
 }
+
 async function deleteRiskZone(req, res) {
   try {
-    console.log("deleting risk zone...");
+    console.log("Deleting risk zone...");
     const { id } = req.params;
+
     if (!id) {
-      sendResponse(
-        res,
-        401,
-        false,
-        "please provide id",
-        null,
-        "please provide id"
-      );
-      return;
+      return sendResponse(res, 400, false, "Risk zone ID is required");
     }
+
     const deleted = await deleteDangerArea(id);
 
-    sendResponse(res, 200, true, "deleted successfully", deleted, null);
+    if (!deleted) {
+      return sendResponse(res, 404, false, "Risk zone not found");
+    }
+
+    sendResponse(res, 200, true, "Risk zone successfully deleted", deleted);
   } catch (error) {
-    console.log("error in deleting risk zone");
-    sendResponse(res, 400, false, "error in deleting risk zone ");
+    console.error("Error in deleting risk zone:", error.message);
+    sendResponse(
+      res,
+      500,
+      false,
+      "Failed to delete risk zone",
+      null,
+      error.message
+    );
   }
 }
 
