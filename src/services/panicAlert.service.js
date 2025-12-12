@@ -26,6 +26,7 @@ async function sendPanic(userId, location, eventId) {
   const io = getIO();
   const onlineUsers = global.onlineUsers;
   console.log("online users:", onlineUsers);
+  console.log("trustedContacts:",trustedContacts);
   const userPayLoad = getUserPayload(userInfo, location, eventId);
   console.log("fine:");
   console.log("userPayLoad:", userPayLoad);

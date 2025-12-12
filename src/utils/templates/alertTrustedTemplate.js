@@ -6,7 +6,7 @@ function getTrustedContactAlert(userPayload, mailto, tokens) {
     name: originalName,
     mapUrl: originalMapUrl,
     coordinates: originalCoordinates,
-  } = user.originalLocation;
+  } = user.location;
   const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
   const trackingUrl = `${backendUrl}/api/sos/email-view-tracker?token=${tokens.tracking}`;
   const responseUrlYes = `${backendUrl}/api/sos/response?token=${tokens.yes}`;
