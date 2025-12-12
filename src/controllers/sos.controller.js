@@ -41,6 +41,7 @@ async function triggerPanicEvent(req, res) {
     };
     console.log("panic event:", panicEvent);
     const newPanicEvent = await savePanicEvent(panicEvent);
+    panicEvent["sosroomId"] = newPanicEvent._id;
     console.log("new panic event:", newPanicEvent);
     if (!newPanicEvent) {
       return sendResponse(res, 400, false, "failed to save panic event!");

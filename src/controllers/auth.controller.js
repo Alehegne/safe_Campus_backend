@@ -11,6 +11,7 @@ const userModel = require("../models/user.model");
 const cacheKey = require("../utils/cache/cacheKey");
 const { delCacheByPrefix } = require("../utils/cache/cacheService");
 const jwt = require("jsonwebtoken");
+
 async function registerUser(req, res) {
   try {
     console.log("registering user...");
@@ -80,13 +81,28 @@ async function addTrustedContacts(req, res) {
       );
     }
     //get contacts array from body
-    const { contacts } = req.body;
+    const { name, phoneNumber, email } = req.body;
 
+    if (!phoneNumber || !email || !name) {
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Please provide phone number and email for the trusted contact"
+      );
+    }
+    const contact = {
+      name: name,
+      phone: phoneNumber,
+      email: email,
+    };
+
+    //add a single contact to the user's trusted contacts
     const updatedUser = await userModel.findByIdAndUpdate(
       user.userId,
       {
         $push: {
-          trustedContacts: { $each: contacts },
+          trustedContacts: contact,
         },
       },
       { new: true } // Return the updated user
@@ -97,6 +113,40 @@ async function addTrustedContacts(req, res) {
     sendResponse(res, 200, true, "Trusted contacts added successfully");
   } catch (error) {
     console.error("Error adding trusted contacts:", error);
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
+async function deleteTrustedContacts(req, res) {
+  try {
+    console.log("deleting trusted contacts...");
+    const { user } = req;
+    if (!req.body || req.body.length === 0) {
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Please provide trusted contacts information"
+      );
+    }
+    //get contact email
+    const { email } = req.body;
+
+    //delete a single contact from the user's trusted contacts
+    const updatedUser = await userModel.findByIdAndUpdate(
+      user.userId,
+      {
+        $pull: {
+          trustedContacts: { email: email },
+        },
+      },
+      { new: true } // Return the updated user
+    );
+    if (!updatedUser) {
+      return sendResponse(res, 404, false, "User not found", null);
+    }
+    sendResponse(res, 200, true, "Trusted contact deleted successfully");
+  } catch (error) {
+    console.error("Error deleting trusted contacts:", error);
     sendResponse(res, 500, false, "Server error", null, error.message);
   }
 }
@@ -118,6 +168,7 @@ async function getTrustedContacts(req, res) {
         email: contact.email,
       };
     });
+    console.log("trusted contacts retrieved:", filteredContacts);
     return sendResponse(
       res,
       200,
@@ -336,10 +387,12 @@ async function adminController(req, res) {
 async function refrehToken(req, res) {
   try {
     console.log("refreshing token...");
-    const { refreshToken } = req.body;
+    const  refreshToken  = req.body.refresh_token;
     if (!refreshToken) {
+      console.log("no ref token");
       return sendResponse(res, 400, false, "Please provide refresh token");
     }
+    console.log("refresh token from the client:", refreshToken);
     //verify token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
     if (!decoded) {
@@ -351,6 +404,7 @@ async function refrehToken(req, res) {
       studentId: decoded.studentId,
     };
     const newToken = generateJwtToken(payload);
+    console.log("done refreshing token!")
     return sendResponse(res, 200, true, "Token refreshed successfully", {
       token: newToken,
     });

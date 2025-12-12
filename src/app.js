@@ -11,6 +11,7 @@ const routeRoutes = require("./routes/route.route");
 const reportRoutes = require("./routes/report.route");
 const dangerAreaRoutes = require("./routes/dangerArea.route.js");
 const userManagementRoutes = require("./routes/userManagement.route.js");
+const alertsRouter=require("./routes/alerts.route.js");
 const logger = require("./middleware/globalLogger.js");
 
 app.use(express.json());
@@ -31,6 +32,8 @@ console.log("Routes loaded.");
 app.use("/api/users", userManagementRoutes);
 //admin anayltics
 app.use("/api/admin", require("./routes/admin.route"));
+//alerts
+app.use("/api/notification",alertsRouter);
 
 app.get("/", (req, res) => {
   console.log("welcome to safecampus");

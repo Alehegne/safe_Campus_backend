@@ -9,6 +9,7 @@ async function getDangerArea(req, res) {
   try {
     console.log("Getting dangerous area...");
     const dangerArea = await getDangerService(req.query);
+    console.log("fetched dangerous area:", dangerArea);
     sendResponse(
       res,
       200,
