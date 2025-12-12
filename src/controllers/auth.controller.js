@@ -381,15 +381,16 @@ async function adminController(req, res) {
 async function refrehToken(req, res) {
   try {
     console.log("refreshing token...");
-    const { refreshToken } = req.body;
-    console.log("refresh from client:", refreshToken);
+    const  refreshToken  = req.body.refresh_token;
     if (!refreshToken) {
+      console.log("no ref token");
       return sendResponse(res, 400, false, "Please provide refresh token");
     }
     console.log("refresh token from the client:", refreshToken);
     //verify token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
     if (!decoded) {
+      console.log("Invalid refresh token");
       return sendResponse(res, 401, false, "Invalid refresh token");
     }
     const payload = {
@@ -398,6 +399,7 @@ async function refrehToken(req, res) {
       studentId: decoded.studentId,
     };
     const newToken = generateJwtToken(payload);
+    console.log("done refreshing token!")
     return sendResponse(res, 200, true, "Token refreshed successfully", {
       token: newToken,
     });

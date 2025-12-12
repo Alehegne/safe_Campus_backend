@@ -2,10 +2,10 @@ const Joi = require("joi");
 
 function validateUser(userData) {
   const userSchema = Joi.object({
-    studentId: Joi.string().optional(),
+    studentId: Joi.string().required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
-    fullName: Joi.string().optional(),
+    fullName: Joi.string().required(),
     role: Joi.string()
       .valid("student", "admin", "campus_security")
       .default("student"),
