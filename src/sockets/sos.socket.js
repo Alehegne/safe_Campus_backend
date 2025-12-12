@@ -32,6 +32,7 @@ module.exports = function initSosSocket(io) {
     // RECEIVE LOCATION FROM USER AND EMIT TO CHANNEL
     socket.on("update_location", ({ channelId, location }) => {
       // emit to everyone in this channel EXCEPT the sender
+      console.log(location);
       socket.to(channelId).emit("location_update", {
         userId: socket.id,
         location,

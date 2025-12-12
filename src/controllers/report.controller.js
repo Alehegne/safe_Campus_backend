@@ -61,42 +61,49 @@ async function reportIncident(req, res) {
     //   image_url = await uploadImage(req.file.mimetype, evidenceImage);
     // }
 
-    const incidentData = {
-      description,
-      location,
-      anonymous,
-      // evidenceImage: image_url,
-      tag: tag,
-    };
-    if (!anonymous) {
-      incidentData.reporterId = req.user.userId;
-    }
-    console.log("incidentData in report incident:", incidentData);
+
 
     // const incident = await saveReport(incidentData);
     //executing both in paralle, for performace
-    const [image_url, incident] = await Promise.allSettled([
-      evidenceImage ? uploadImage(req.file.mimetype, evidenceImage) : null,
-      saveReport(incidentData),
-    ]);
-
-    console.log("image_url:", image_url);
-
-    if (incident.status !== "fulfilled") {
-      console.error("Error saving incident:", incident.reason);
-      return sendResponse(
-        res,
-        500,
-        false,
-        "Error reporting incident",
-        null,
-        "Error reporting incident"
-      );
+    console.log("starting image uploads:");
+    const image_url = await uploadImage(req.file.mimetype, evidenceImage);
+     const incidentData = {
+      description,
+      location,
+      anonymous,
+      evidenceImage: image_url,
+      tag: tag,
+    };
+    const incident = await saveReport(incidentData);
+    if (!anonymous) {
+      incidentData.reporterId = req.user.userId;
     }
-    if (image_url.status === "fulfilled") {
-      incident.value.evidenceImage = image_url.value;
-      await incident.value.save();
-    }
+    // const [image_url, incident] = await Promise.allSettled([
+    //   evidenceImage ? uploadImage(req.file.mimetype, evidenceImage) : null,
+    //   saveReport(incidentData),
+    // ]);
+    
+    console.log("done image uploads:");
+
+
+    // console.log("image_url:", image_url);
+    // console.log("incident:",incident);
+    // if (incident.status !== "fulfilled") {
+    //   console.error("Error saving incident:", incident.reason);
+    //   return sendResponse(
+    //     res,
+    //     500,
+    //     false,
+    //     "Error reporting incident",
+    //     null,
+    //     "Error reporting incident"
+    //   );
+    // }
+    // console.log("saved!!")
+    // if (image_url.status === "fulfilled") {
+    //   incident.value.evidenceImage = image_url.value;
+    //   await incident.value.save();
+    // }
     console.log("incident:", incident.value);
 
     // if (!incident) {

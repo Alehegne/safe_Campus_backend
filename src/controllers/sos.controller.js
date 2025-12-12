@@ -40,7 +40,6 @@ async function triggerPanicEvent(req, res) {
     };
     console.log("panic event:", panicEvent);
     const newPanicEvent = await savePanicEvent(panicEvent);
-    panicEvent["sosroomId"] = newPanicEvent._id;
     console.log("new panic event:", newPanicEvent);
     if (!newPanicEvent) {
       return sendResponse(res, 401, false, "failed to save panic event!");
@@ -50,10 +49,12 @@ async function triggerPanicEvent(req, res) {
     //save the panic event to the database
 
     // console.log("new event created:", newPanicEvent);
-    sendResponse(res, 200, true, "success", {
-      message: "Panic event triggered successfully.",
-      data: newPanicEvent,
-    });
+    sendResponse(res, 200, true,
+    "Panic event triggered successfully.",
+      {
+        sosroomId:newPanicEvent._id
+      }
+    );
   } catch (error) {
     console.error("Error triggering panic event:", error);
     return sendResponse(

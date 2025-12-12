@@ -3,7 +3,9 @@ const incidentModel = require("../models/incidentModel");
 async function saveReport(incidentData) {
   try {
     const incident = await incidentModel.create(incidentData);
+    console.log('incident in save:',incident);
     await incident.populate("reporterId", "fullName email studentId role");
+    console.log("done saving report");
     return incident;
   } catch (error) {
     console.error("Error saving report:", error);
