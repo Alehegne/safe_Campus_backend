@@ -14,10 +14,10 @@ const userManagementRoutes = require("./routes/userManagement.route.js");
 const alertsRouter = require("./routes/alerts.route.js");
 const logger = require("./middleware/globalLogger.js");
 
-const cors = require("cors");
-const getCorsConfig = require("./config/cors.config");
-//configure app
-app.use(cors(getCorsConfig()));
+// const cors = require("cors");
+// const getCorsConfig = require("./config/cors.config");
+// //configure app
+// app.use(cors(getCorsConfig()));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

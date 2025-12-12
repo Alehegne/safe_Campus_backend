@@ -1,47 +1,47 @@
-// src/sockets/location.socket.js
+// src/sockets/sos.socket.js
 
-module.exports = function initSosSocket(io) {
-  const locationNamespace = io.of("/location_updates");
+module.exports = function initSOSSocket(io) {
+  const sosNamespace = io.of("/sos");
 
-  locationNamespace.on("connection", (socket) => {
-    console.log("Client connected to location namespace:", socket.id);
+  sosNamespace.on("connection", (socket) => {
+    console.log("client connected:", socket.id);
 
-    // JOIN A CHANNEL/ROOM
-    socket.on("join_channel", ({ channelId }) => {
-      socket.join(channelId);
-      console.log(`${socket.id} joined channel: ${channelId}`);
+    // USER JOINS SOS ROOM
+    socket.on("join_channel", ({ sosSessionId, isAdmin }) => {
+      socket.join(sosSessionId);
 
-      // Notify others in that channel
-      socket.to(channelId).emit("user_joined", {
-        userId: socket.id,
-        channelId,
-      });
+      console.log(`${socket.id} joined SOS room: ${sosSessionId}`);
+
+      // Notify admins if a user joins
+      if (!isAdmin) {
+        socket.to(sosSessionId).emit("victim_joined", {
+          socketId: socket.id,
+          time: new Date(),
+        });
+      }
     });
 
-    // LEAVE A CHANNEL/ROOM
-    socket.on("leave_channel", ({ channelId }) => {
-      socket.leave(channelId);
-      console.log(` ${socket.id} left channel: ${channelId}`);
-
-      socket.to(channelId).emit("user_left", {
-        userId: socket.id,
-        channelId,
-      });
-    });
-
-    // RECEIVE LOCATION FROM USER AND EMIT TO CHANNEL
-    socket.on("update_location", ({ channelId, location }) => {
-      // emit to everyone in this channel EXCEPT the sender
-      console.log(location);
-      socket.to(channelId).emit("location_update", {
+    // USER SENDS LIVE LOCATION
+    socket.on("send_location", ({ sosSessionId, location }) => {
+      // forward to admins
+      socket.to(sosSessionId).emit("location_update", {
         userId: socket.id,
         location,
+        timestamp: new Date(),
       });
     });
 
-    // DISCONNECT LOG
+    // USER LEAVES SOS ROOM
+    socket.on("leave_channel", ({ sosSessionId }) => {
+      socket.leave(sosSessionId);
+
+      socket.to(sosSessionId).emit("victim_left", {
+        socketId: socket.id,
+      });
+    });
+
     socket.on("disconnect", () => {
-      console.log("Client disconnected:", socket.id);
+      console.log("SOS client disconnected:", socket.id);
     });
   });
 };
