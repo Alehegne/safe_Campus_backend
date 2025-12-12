@@ -8,8 +8,13 @@ const routeRoutes = require("./routes/route.route");
 const reportRoutes = require("./routes/report.route");
 const dangerAreaRoutes = require("./routes/dangerArea.route.js");
 const userManagementRoutes = require("./routes/userManagement.route.js");
-const alertsRouter=require("./routes/alerts.route.js");
+const alertsRouter = require("./routes/alerts.route.js");
 const logger = require("./middleware/globalLogger.js");
+
+const cors = require("cors");
+const getCorsConfig = require("./config/cors.config");
+//configure app
+app.use(cors(getCorsConfig()));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -28,7 +33,7 @@ app.use("/api/users", userManagementRoutes);
 //admin anayltics
 app.use("/api/admin", require("./routes/admin.route"));
 //alerts
-app.use("/api/notification",alertsRouter);
+app.use("/api/notification", alertsRouter);
 
 app.get("/", (req, res) => {
   console.log("welcome to safecampus");
