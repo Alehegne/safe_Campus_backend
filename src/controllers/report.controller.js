@@ -71,6 +71,7 @@ async function reportIncident(req, res) {
     if (!anonymous) {
       incidentData.reporterId = req.user.userId;
     }
+    console.log("incidentData in report incident:", incidentData);
 
     // const incident = await saveReport(incidentData);
     //executing both in paralle, for performace
@@ -78,6 +79,8 @@ async function reportIncident(req, res) {
       evidenceImage ? uploadImage(req.file.mimetype, evidenceImage) : null,
       saveReport(incidentData),
     ]);
+
+    console.log("image_url:", image_url);
 
     if (incident.status !== "fulfilled") {
       console.error("Error saving incident:", incident.reason);
@@ -94,6 +97,7 @@ async function reportIncident(req, res) {
       incident.value.evidenceImage = image_url.value;
       await incident.value.save();
     }
+    console.log("incident:", incident.value);
 
     // if (!incident) {
     //   return sendResponse(
@@ -128,7 +132,8 @@ async function reportIncident(req, res) {
       saveDangerMap(dangerMapData),
       delCacheByPrefix(cacheKey.reports()),
     ]);
-    // await saveDangerMap(dangerMapData);
+    console.log("successfully saved danger map data");
+    await saveDangerMap(dangerMapData);
 
     return sendResponse(
       res,

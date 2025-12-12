@@ -26,8 +26,19 @@ const AlertsSchema = new mongoose.Schema({
      type:{
         type:String,
         enum:["alert","announcement"]
-     }
-});
+     },
+   //   scheduled announcements for users by admin
+       scheduledTime:{
+         type:Date,
+         default:null
+       },
+       //target audience for announcement
+         targetAudience:{
+             type:String,
+               enum:["all","students","staff","faculty"],
+               default:"all"
+         }
+       },{timestamps:true});
 
 
 module.exports=mongoose.model("Alerts",AlertsSchema);

@@ -1,3 +1,4 @@
+const { required } = require("joi");
 const mongoose = require("mongoose");
 
 // Pure GeoJSON Point schema without metadata
@@ -86,6 +87,7 @@ const routeSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
+      required: false,
     },
   },
   { timestamps: true }
