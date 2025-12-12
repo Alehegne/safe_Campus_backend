@@ -4,6 +4,7 @@ const {
   generateTrackingToken,
   generateResponseToken,
 } = require("./generateTokens");
+const { isValidEmail } = require("./helper");
 const sendEmail = require("./sendEmail");
 const getTrustedContactAlert = require("./templates/alertTrustedTemplate");
 
@@ -14,6 +15,7 @@ async function sendAlertToTrustedContacts(
   onlineUsers
 ) {
   console.log("sending alert to trusted contacts...");
+  console.log("trusted contactsss:",trustedContacts);
   for (const user of trustedContacts) {
     let registered_contact;
     try {
@@ -54,10 +56,13 @@ async function sendAlertToTrustedContacts(
         yes: responseTokenYes,
         no: responseTokenNo,
       };
+      console.log("user payload:",userPayLoad);
       const emailInfo = getTrustedContactAlert(userPayLoad, user.email, tokens);
 
       try {
+        if(isValidEmail(user.email)){
         await sendEmail(emailInfo);
+        }
       } catch (error) {
         console.error("Error sending email:", error);
         continue;

@@ -36,6 +36,20 @@ function getTrackingImage() {
   );
 }
 
+const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+function isValidEmail(email) {
+  if (typeof email !== 'string') return false;
+  const s = email.trim();
+  return EMAIL_RE.test(s);
+}
+
+// // usage
+// console.log(isValidEmail('user@example.com')); // true
+// console.log(isValidEmail('user+tag@sub.domain.co')); // true
+// console.log(isValidEmail('bad@@example.com')); // false
+
+
 module.exports = {
   generateJwtToken,
   comparePassword,
@@ -43,4 +57,5 @@ module.exports = {
   getGoogleMapURL,
   decodeToken,
   getTrackingImage,
+  isValidEmail
 };
