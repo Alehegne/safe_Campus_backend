@@ -11,6 +11,7 @@ module.exports = (req, res, next) => {
     return sendResponse(res, 401, false, "Unauthorized", "Invalid token");
   }
   const token = authHeader.split(" ")[1];
+  console.log("token:", token);
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) return sendResponse(res, 401, false, "Unauthorized", {}, err);
 

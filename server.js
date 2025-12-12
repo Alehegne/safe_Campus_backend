@@ -3,6 +3,9 @@ const app = require("./src/app");
 const { createServer } = require("http");
 const connectToDatabase = require("./src/config/dbConnection");
 const { initSocket } = require("./src/config/socket.config");
+
+//configure app
+
 connectToDatabase();
 //create server AFTER app is fully configured
 const server = createServer(app);

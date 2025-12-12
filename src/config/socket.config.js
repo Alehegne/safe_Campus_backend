@@ -16,6 +16,8 @@ function initSocket(server) {
   //auth middleware
   io.use(socketAuth);
 
+  io.use(socketAuth);
+
   //Global error handling
   io.engine.on("connection_error", (err) => {
     console.error("Socket connection error:", {

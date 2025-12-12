@@ -36,12 +36,12 @@ async function sendPanic(userId, location, eventId) {
     onlineUsers
   );
   console.log("alert sent to trusted contacts!");
-  await sendAlertToAdminAndSecurity(
-    adminAndGuards,
-    userPayLoad,
-    io,
-    onlineUsers
-  );
+  // await sendAlertToAdminAndSecurity(
+  //   adminAndGuards,
+  //   userPayLoad,
+  //   io,
+  //   onlineUsers
+  // );
 }
 async function savePanicEvent(panicEvent) {
   const newPanicEvent = new PanicEvent(panicEvent);

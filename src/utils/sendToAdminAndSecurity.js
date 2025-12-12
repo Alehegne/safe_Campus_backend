@@ -17,20 +17,21 @@ async function sendAlertToAdminAndSecurity(
     }
 
     //send FCM to the contact
-    if (user.deviceToken) {
-      sendNotification(
-        user.deviceToken,
-        "Panic Alert",
-        `${userPayLoad.user.fullName} is in danger!`,
-        userPayLoad
-      );
-    }
+    // if (user.deviceToken) {
+    //   sendNotification(
+    //     user.deviceToken,
+    //     "Panic Alert",
+    //     `${userPayLoad.user.fullName} is in danger!`,
+    //     userPayLoad
+    //   );
+    // }
     //send email to the contact
 
     //send email with view link and response link
 
     const emailInfo = getAdminGuardEmailInfo(userPayLoad, user.email);
     await sendEmail(emailInfo);
+    console.log("Email sent successfully");
   }
 }
 
