@@ -26,6 +26,7 @@ async function sendEmail(info) {
   };
 
   try {
+    console.log("sending emails to :",info.mailto)
     await transporter.sendMail(mailOptions);
     return true;
   } catch (error) {

@@ -30,6 +30,7 @@ async function sendAlertToAdminAndSecurity(
     //send email with view link and response link
 
     const emailInfo = getAdminGuardEmailInfo(userPayLoad, user.email);
+    
     await sendEmail(emailInfo);
     console.log("Email sent successfully");
   }
