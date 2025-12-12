@@ -335,11 +335,13 @@ async function refrehToken(req, res) {
     console.log("refreshing token...");
     const  refreshToken  = req.body.refresh_token;
     if (!refreshToken) {
+      console.log("no ref token");
       return sendResponse(res, 400, false, "Please provide refresh token");
     }
     //verify token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
     if (!decoded) {
+      console.log("Invalid refresh token");
       return sendResponse(res, 401, false, "Invalid refresh token");
     }
     const payload = {
