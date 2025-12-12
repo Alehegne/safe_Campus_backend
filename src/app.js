@@ -1,5 +1,8 @@
 const express = require("express");
+const cors = require("cors");
+const getCorsConfig = require("./config/cors.config");
 const app = express();
+app.use(cors(getCorsConfig()));
 const authRoutes = require("./routes/auth.route");
 const profileRoutes = require("./routes/profile.route");
 const sosRoutes = require("./routes/panicAlert.route");
@@ -16,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //logger middleware
 app.use(logger);
+console.log("Loading routes...");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
@@ -23,6 +27,7 @@ app.use("/api/routes", routeRoutes);
 app.use("/api/sos", sosRoutes);
 app.use("/api/report", reportRoutes);
 app.use("/api/dangerArea", dangerAreaRoutes);
+console.log("Routes loaded.");
 // user management routes
 app.use("/api/users", userManagementRoutes);
 //admin anayltics

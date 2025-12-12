@@ -18,13 +18,14 @@ async function triggerPanicEvent(req, res) {
     const { user } = req;
     console.log("user:", user);
     if (!req.body || req.body.length === 0) {
-      return sendResponse(res, 401, false, "invalid request!");
+      return sendResponse(res, 400, false, "invalid request!");
     }
     const { location } = req.body;
     if (!location || !Array.isArray(location.coordinates)) {
       return sendResponse(
         res,
-        401,
+        400,
+        false,
         "provide location with coordinates!(longitude,latitude)"
       );
     }
@@ -43,7 +44,7 @@ async function triggerPanicEvent(req, res) {
     panicEvent["sosroomId"] = newPanicEvent._id;
     console.log("new panic event:", newPanicEvent);
     if (!newPanicEvent) {
-      return sendResponse(res, 401, false, "failed to save panic event!");
+      return sendResponse(res, 400, false, "failed to save panic event!");
     }
     await sendPanic(user.userId, location, newPanicEvent._id);
     console.log("panic event sent to trusted contacts!");
@@ -94,7 +95,7 @@ async function getAllPanicByUserId(req, res) {
       req.query
     );
     if (!panicEvents) {
-      return sendResponse(res, 401, false, "failed to get panic events!");
+      return sendResponse(res, 400, false, "failed to get panic events!");
     }
     return sendResponse(res, 200, true, "success", {
       message: "Panic events retrieved successfully.",
@@ -164,14 +165,14 @@ async function resolvedPanicEvent(req, res) {
     const { eventId } = req.params;
     const { user } = req;
     if (!eventId || mongoose.Types.ObjectId.isValid(eventId)) {
-      return sendResponse(res, 401, false, "invalid request!");
+      return sendResponse(res, 400, false, "invalid request!");
     }
     //toggle the resolved status of the panic event,
     //and update the resolvedBy field with the userId of the user who resolved it
 
     const response = await updateResolvedEvents(eventId, user.userId);
     if (!response.success) {
-      return sendResponse(res, 401, false, response.message);
+      return sendResponse(res, 400, false, response.message);
     }
     sendResponse(res, 200, true, "success", {
       message: "Panic event resolved successfully.",
@@ -194,11 +195,11 @@ async function updateNotifiedContacts(req, res) {
     const { eventId } = req.params;
     const { user } = req;
     if (!eventId) {
-      return sendResponse(res, 401, false, "invalid request!");
+      return sendResponse(res, 400, false, "invalid request!");
     }
     const response = await updateNotified(eventId, user);
     if (!response.success) {
-      return sendResponse(res, 401, false, response.message);
+      return sendResponse(res, 400, false, response.message);
     }
 
     return sendResponse(res, 200, true, "success", "successfully updated!", {
@@ -223,12 +224,12 @@ async function updateAcknowledgedContacts(req, res) {
     const { user } = req;
     const { response = null } = req.body;
     if (!eventId) {
-      return sendResponse(res, 401, false, "invalid request!");
+      return sendResponse(res, 400, false, "invalid request!");
     }
     //update the acknowledged contacts
     const result = await updateAcknowledgedBy(eventId, user, response);
     if (!result.success) {
-      return sendResponse(res, 401, false, result.message);
+      return sendResponse(res, 400, false, result.message);
     }
 
     return sendResponse(res, 200, true, "success", "successfully updated!", {
