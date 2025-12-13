@@ -25,7 +25,7 @@ async function sendAlertToTrustedContacts(
       continue;
     }
     const role = registered_contact[0]?.role || "trustedContact";
-    if (!registered_contact || registered_contact.length === 0) {
+    // if (!registered_contact || registered_contact.length === 0 || registered_contact[0].deviceToken) {
       if (!user.email) {
         console.log("No email provided for trusted contact", user.name);
         continue;
@@ -61,6 +61,7 @@ async function sendAlertToTrustedContacts(
 
       try {
         if(isValidEmail(user.email)){
+        console.log("emails sent to:",user);
         await sendEmail(emailInfo);
         }
       } catch (error) {
@@ -68,21 +69,24 @@ async function sendAlertToTrustedContacts(
         continue;
       }
 
-      continue;
-    } else if (registered_contact && registered_contact.length > 0) {
+      // continue;
+   if (registered_contact && registered_contact.length > 0) {
       //FCM or socket.io
-      const contactId = registered_contact[0]._id.toString();
-      const socketId = onlineUsers[contactId];
+      console.log("sending notifications::")
+      // const contactId = registered_contact[0]._id.toString();
+      // const socketId = onlineUsers[contactId];
 
-      if (socketId) {
-        //send socket event to the contact
-        io.to(socketId).emit("panicEvent", userPayLoad);
-      }
+      // if (socketId) {
+      //   //send socket event to the contact
+      //   io.to(socketId).emit("panicEvent", userPayLoad);
+      // }
       //send FCM to the contact
-      console.log("send FCM to contact", user.email);
-      if (registered_contact.deviceToken) {
+      // console.log("send FCM to contact", user.email);
+      console.log(registered_contact);
+      if (registered_contact[0].deviceToken) {
+        console.log("sending firebase message to :",user)
         sendNotification(
-          registered_contact.deviceToken,
+          registered_contact[0].deviceToken,
           "Panic Alert",
           `${userPayLoad.user.fullName} is in danger!`,
           userPayLoad
