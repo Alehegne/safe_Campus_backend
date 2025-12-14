@@ -24,7 +24,7 @@ const dangerAreaSchema = new mongoose.Schema(
         },
       },
     },
-    severiry: {
+    severity: {
       type: String,
       enum: ["low", "medium", "high"],
     },

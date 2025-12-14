@@ -30,7 +30,7 @@ async function saveDangerMap(data) {
       //updating the reportCount
       existing[0].reportCount += 1;
       //marking the severity
-      existing[0].severiry =
+      existing[0].severity =
         existing[0].reportCount >= 3
           ? "high"
           : existing[0].reportCount >= 2
@@ -94,7 +94,7 @@ async function getDangerService(query) {
     const filter = {
       ...(filters.status && { status: filters.status }),
       ...(filters.types && { types: { $in: filters.types.split(",") } }),
-      ...(filters.severity && { severiry: filters.severiry }),
+      ...(filters.severity && { severity: filters.severity }),
       ...(filters.source && { source: { $in: filters.source.split(",") } }),
     };
 
@@ -130,4 +130,5 @@ module.exports = {
   saveDangerMap,
   getDangerService,
   saveRiskZone,
+  deleteDangerArea,
 };

@@ -39,12 +39,13 @@ async function getAnnouncements(req, res) {
 }
 async function createAlert(req, res) {
   try {
-    const { title, content, status, type } = req.body;
+    const { title, content, status, type, targetAudience } = req.body;
     const newAlert = new AlertsModel({
       title,
       content,
       status,
       type,
+      targetAudience,
     });
     await newAlert.save();
     return sendResponse(

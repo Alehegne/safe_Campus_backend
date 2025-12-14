@@ -61,13 +61,11 @@ async function reportIncident(req, res) {
     //   image_url = await uploadImage(req.file.mimetype, evidenceImage);
     // }
 
-
-
     // const incident = await saveReport(incidentData);
     //executing both in paralle, for performace
     console.log("starting image uploads:");
     const image_url = await uploadImage(req.file.mimetype, evidenceImage);
-     const incidentData = {
+    const incidentData = {
       description,
       location,
       anonymous,
@@ -82,9 +80,8 @@ async function reportIncident(req, res) {
     //   evidenceImage ? uploadImage(req.file.mimetype, evidenceImage) : null,
     //   saveReport(incidentData),
     // ]);
-    
-    console.log("done image uploads:");
 
+    console.log("done image uploads:");
 
     // console.log("image_url:", image_url);
     // console.log("incident:",incident);
@@ -127,7 +124,7 @@ async function reportIncident(req, res) {
         type: "Point",
         coordinates: coordinates,
       },
-      severiry: "low",
+      severity: "low",
       reportCount: 1,
       source: anonymous ? "anonymous" : incident?.reporterId?.role,
       status: "active",
