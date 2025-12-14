@@ -1,138 +1,89 @@
-// src/config/socket.js
 const { Server } = require("socket.io");
 const initSosSocket = require("../sockets/sos.socket");
 const socketAuth = require("../sockets/middleware/socket.auth");
+const {
+  addOnlineUser,
+  removeOnlineUser,
+  getAllOnlineUsers,
+} = require("../sockets/onlineUser");
 
 let ioInstance;
 
+/**
+ * Initialize Socket.IO server
+ * @param {http.Server} server - HTTP/S server
+ */
 function initSocket(server) {
-  const io = new Server(server, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"],
-    },
-    transports: ["websocket", "polling"],
-  });
-  //auth middleware
-  io.use(socketAuth);
-
-  //Global error handling
-  io.engine.on("connection_error", (err) => {
-    console.error("Socket connection error:", {
-      code: err.code,
-      message: err.message,
-      req: err.req,
-      context: err.context,
+  try {
+    const io = new Server(server, {
+      cors: {
+        origin: "*", // adjust to your frontend domain in production
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      },
+      transports: ["websocket", "polling"],
+      pingTimeout: 60000,
+      pingInterval: 25000,
     });
-  });
 
-  console.log("Socket.IO initialized");
+    // Attach authentication middleware
+    io.use(socketAuth);
 
-  // Initialize all socket modules
-  initSosSocket(io);
+    // Connection handler
+    io.on("connection", (socket) => {
+      console.log(`Socket connected: ${socket.id}`, socket.user);
 
-  ioInstance = io;
+      // Register user online
+      socket.on("register_online", (userId) => {
+        addOnlineUser(userId, socket.id);
+        console.log("Online users after registration:", getAllOnlineUsers());
+      });
+
+      // Remove user from online list
+      socket.on("remove_online", (userId) => {
+        removeOnlineUser(userId, socket.id);
+        console.log("Online users after removal:", getAllOnlineUsers());
+      });
+
+      // Handle disconnection
+      socket.on("disconnect", (reason) => {
+        console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`);
+        removeOnlineUser(socket.id);
+        console.log("Online users after disconnection:", getAllOnlineUsers());
+      });
+
+      // Handle socket errors
+      socket.on("error", (error) => {
+        console.error(`Socket error [${socket.id}]:`, error);
+      });
+    });
+
+    // Global connection errors
+    io.engine.on("connection_error", (err) => {
+      console.error("Socket engine connection error:", {
+        code: err.code,
+        message: err.message,
+        req: err.req,
+        context: err.context,
+      });
+    });
+
+    // Initialize your app-specific sockets
+    initSosSocket(io);
+
+    ioInstance = io;
+    console.log("Socket.IO server initialized successfully");
+  } catch (error) {
+    console.error("Failed to initialize Socket.IO server:", error);
+    throw error;
+  }
 }
 
+/**
+ * Get the initialized Socket.IO instance
+ */
 function getIO() {
-  if (!ioInstance) throw new Error("Socket not initialized!");
+  if (!ioInstance) throw new Error("Socket.IO not initialized");
   return ioInstance;
 }
 
 module.exports = { initSocket, getIO };
-
-// /*
-// # initialize socket.io server
-// # then expose the io instance to be used in other file,
-// #and initialize socket events
-// */
-
-// const { Server } = require("socket.io");
-// const initSocketEvents = require("../sockets/index");
-
-// let ioInstance;
-
-// function initSocket(server) {
-//   try {
-//     // Parse allowed origins from environment variable
-//     // const allowedOrigins = process.env.ALLOWEDORIGINS
-//     //   ? process.env.ALLOWEDORIGINS.split(',')
-//     //   : ['http://localhost:3000'];
-
-//     const io = new Server(server, {
-//       cors: {
-//         origin: "*",
-//         methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-//         credentials: true,
-//       },
-//       // Connection settings
-//       pingTimeout: 60000, // 60 seconds
-//       pingInterval: 25000, // 25 seconds
-//       connectTimeout: 45000, // 45 seconds
-//       transports: ["websocket", "polling"],
-//     });
-
-//     console.log("Socket.io server instance created");
-//     // Global error handling
-//     io.engine.on("connection_error", (err) => {
-//       console.error("Socket connection error:", {
-//         code: err.code,
-//         message: err.message,
-//         req: err.req,
-//         context: err.context,
-//       });
-//     });
-
-//     // Initialize socket events first (this includes authentication middleware)
-//     initSocketEvents(io);
-
-//     // Create namespaces after middleware setup
-//     const routeNamespace = io.of("/routes");
-
-//     // Namespace error handling
-//     routeNamespace.on("connection_error", (err) => {
-//       console.error("Route namespace connection error:", err);
-//     });
-
-//     // Connection handling
-//     io.on("connection", (socket) => {
-//       console.log(
-//         `Client connected - ID: ${socket.id}, IP: ${socket.handshake.address}`
-//       );
-
-//       // Handle reconnection
-//       socket.on("reconnect", (attemptNumber) => {
-//         console.log(
-//           `Client reconnected - ID: ${socket.id}, Attempt: ${attemptNumber}`
-//         );
-//       });
-
-//       // Handle disconnection
-//       socket.on("disconnect", (reason) => {
-//         console.log(
-//           `Client disconnected - ID: ${socket.id}, Reason: ${reason}`
-//         );
-//       });
-
-//       // Handle errors
-//       socket.on("error", (error) => {
-//         console.error(`Socket error for client ${socket.id}:`, error);
-//       });
-//     });
-
-//     ioInstance = io;
-//     console.log("Socket.io server initialized successfully");
-//   } catch (error) {
-//     console.error("Failed to initialize Socket.io server:", error);
-//     throw error;
-//   }
-// }
-
-// function getIO() {
-//   if (!ioInstance) {
-//     throw new Error("Socket.io not initialized");
-//   }
-//   return ioInstance;
-// }
-
-// module.exports = { initSocket, getIO };

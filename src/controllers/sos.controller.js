@@ -186,8 +186,9 @@ async function resolvedPanicEvent(req, res) {
   try {
     console.log("updating resolved panic event...");
     const { eventId } = req.params;
+    console.log("eventId:", eventId);
     const { user } = req;
-    if (!eventId || mongoose.Types.ObjectId.isValid(eventId)) {
+    if (!eventId || !mongoose.Types.ObjectId.isValid(eventId)) {
       return sendResponse(res, 400, false, "invalid request!");
     }
     //toggle the resolved status of the panic event,
