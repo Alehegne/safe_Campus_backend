@@ -35,7 +35,7 @@ router.get("/email-view-tracker", emailViewTracker);
 router.put(
   "/update/:eventId",
   verifyToken,
-  allowedRoles("admin", "campus_security"),
+  allowedRoles("admin", "campus_security", "student"),
   resolvedPanicEvent
 );
 //add notified contacts and guards

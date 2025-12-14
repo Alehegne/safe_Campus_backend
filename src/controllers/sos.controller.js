@@ -170,6 +170,7 @@ async function resolvedPanicEvent(req, res) {
     }
     //toggle the resolved status of the panic event,
     //and update the resolvedBy field with the userId of the user who resolved it
+   
 
     const response = await updateResolvedEvents(eventId, user.userId);
     if (!response.success) {

@@ -110,7 +110,9 @@ async function addTrustedContacts(req, res) {
     if (!updatedUser) {
       return sendResponse(res, 404, false, "User not found", null);
     }
+    
     sendResponse(res, 200, true, "Trusted contacts added successfully");
+    console.log("Contact added successfully.......");
   } catch (error) {
     console.error("Error adding trusted contacts:", error);
     sendResponse(res, 500, false, "Server error", null, error.message);
