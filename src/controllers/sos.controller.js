@@ -193,6 +193,7 @@ async function resolvedPanicEvent(req, res) {
     }
     //toggle the resolved status of the panic event,
     //and update the resolvedBy field with the userId of the user who resolved it
+   
 
     //if student, resolve only their own events
     if (user.role === "student") {
