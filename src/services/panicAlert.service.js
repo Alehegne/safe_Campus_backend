@@ -22,27 +22,27 @@ async function sendPanic(userId, location, eventId) {
   //     - Same logic: online → socket, offline → FCM
   // console.log("userInfo:", userInfo);
   const trustedContacts = userInfo.trustedContacts;
+  console.log("trusted contacts:", trustedContacts);
   const adminAndGuards = await findAdminAndSecurity();
+  console.log("admin and guards:", adminAndGuards);
   const io = getIO();
   const onlineUsers = global.onlineUsers;
-  console.log("online users:", onlineUsers);
-  console.log("trustedContacts:",trustedContacts);
   const userPayLoad = getUserPayload(userInfo, location, eventId);
-  console.log("fine:");
-  console.log("userPayLoad:", userPayLoad);
+  console.log("user payload:", userPayLoad);
   await sendAlertToTrustedContacts(
     trustedContacts,
     userPayLoad,
     io,
     onlineUsers
   );
-  console.log("alert sent to trusted contacts!");
-  // await sendAlertToAdminAndSecurity(
-  //   adminAndGuards,
-  //   userPayLoad,
-  //   io,
-  //   onlineUsers
-  // );
+  // console.log("alert sent to trusted contacts!");
+  await sendAlertToAdminAndSecurity(
+    adminAndGuards,
+    userPayLoad,
+    io,
+    onlineUsers
+  );
+  // console.log("alert sent to admin and security!");
 }
 async function savePanicEvent(panicEvent) {
   const newPanicEvent = new PanicEvent(panicEvent);

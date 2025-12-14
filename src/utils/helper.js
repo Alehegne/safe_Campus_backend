@@ -2,6 +2,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
 function generateJwtToken(payload) {
+  console.log("JWT EXPIRATION:", process.env.JWT_EXPIRATION);
+
   return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRATION,
   });

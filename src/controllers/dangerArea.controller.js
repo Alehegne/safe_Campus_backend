@@ -39,7 +39,7 @@ async function postRiskZone(req, res) {
       return sendResponse(res, 400, false, "Request body is empty");
     }
 
-    const { severity, types } = req.body;
+    const { severity, types, zoneName } = req.body;
     const { user } = req;
 
     // Parse and validate location
@@ -120,6 +120,7 @@ async function postRiskZone(req, res) {
       status: "active",
       createdAt: new Date(),
       updatedAt: new Date(),
+      zoneName: zoneName || "Unnamed Zone",
     };
 
     const savedRisk = await saveRiskZone(data);

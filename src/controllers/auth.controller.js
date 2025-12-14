@@ -11,6 +11,7 @@ const userModel = require("../models/user.model");
 const cacheKey = require("../utils/cache/cacheKey");
 const { delCacheByPrefix } = require("../utils/cache/cacheService");
 const jwt = require("jsonwebtoken");
+const sendEmail = require("../utils/sendEmail");
 
 async function registerUser(req, res) {
   try {
@@ -111,6 +112,19 @@ async function addTrustedContacts(req, res) {
       return sendResponse(res, 404, false, "User not found", null);
     }
     
+    //send email to the new contact notifying them that they have been added as a trusted contact
+    const info = {
+      mailto: email,
+      subject: "Added as Trusted Contact",
+      html: `
+      <p>Hello ${name},</p>
+      <p>You have been added as a trusted contact by ${user.email} on the Safe Campus app. You may receive panic alerts from them in case of emergencies.</p>
+      <p>Best regards,<br/>Safe Campus Team</p>
+      `,
+    };
+    console.log("sending email to new trusted contact:", email);
+    await sendEmail(info);
+
     sendResponse(res, 200, true, "Trusted contacts added successfully");
     console.log("Contact added successfully.......");
   } catch (error) {
@@ -389,7 +403,7 @@ async function adminController(req, res) {
 async function refrehToken(req, res) {
   try {
     console.log("refreshing token...");
-    const  refreshToken  = req.body.refresh_token;
+    const refreshToken = req.body.refresh_token;
     if (!refreshToken) {
       console.log("no ref token");
       return sendResponse(res, 400, false, "Please provide refresh token");
@@ -406,7 +420,7 @@ async function refrehToken(req, res) {
       studentId: decoded.studentId,
     };
     const newToken = generateJwtToken(payload);
-    console.log("done refreshing token!")
+    console.log("done refreshing token!");
     return sendResponse(res, 200, true, "Token refreshed successfully", {
       token: newToken,
     });
@@ -424,5 +438,5 @@ module.exports = {
   getTrustedContacts,
   refrehToken,
   addTrustedContacts,
-  deleteTrustedContacts
+  deleteTrustedContacts,
 };

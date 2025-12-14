@@ -14,7 +14,7 @@ const panicEventSchema = new mongoose.Schema({
     },
     coordinates: {
       type: [Number], // [longitude, latitude]
-      required: true,
+      default: undefined,
     },
   },
   notifications: [
