@@ -111,6 +111,7 @@ async function addTrustedContacts(req, res) {
     if (!updatedUser) {
       return sendResponse(res, 404, false, "User not found", null);
     }
+    
     //send email to the new contact notifying them that they have been added as a trusted contact
     const info = {
       mailto: email,
@@ -125,6 +126,7 @@ async function addTrustedContacts(req, res) {
     await sendEmail(info);
 
     sendResponse(res, 200, true, "Trusted contacts added successfully");
+    console.log("Contact added successfully.......");
   } catch (error) {
     console.error("Error adding trusted contacts:", error);
     sendResponse(res, 500, false, "Server error", null, error.message);
