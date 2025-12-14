@@ -12,6 +12,7 @@ const {
 } = require("../services/panicAlert.service");
 const { decodeToken, getTrackingImage } = require("../utils/helper");
 const { default: mongoose } = require("mongoose");
+const PanicEvent = require("../models/panicEvent.model");
 async function triggerPanicEvent(req, res) {
   try {
     console.log("triggering panic event...");
@@ -50,12 +51,12 @@ async function triggerPanicEvent(req, res) {
     //save the panic event to the database
 
     // console.log("new event created:", newPanicEvent);
-    sendResponse(res, 200, true,
-    "Panic event triggered successfully.",
-      {
-        sosroomId:newPanicEvent._id
-      }
-    );
+    console.log("Panic event triggered successfully, final response:", {
+      sosroomId: newPanicEvent._id,
+    });
+    sendResponse(res, 200, true, "Panic event triggered successfully.", {
+      sosroomId: newPanicEvent._id,
+    });
   } catch (error) {
     console.error("Error triggering panic event:", error);
     return sendResponse(
@@ -67,6 +68,27 @@ async function triggerPanicEvent(req, res) {
     );
   }
 }
+
+//get unresolved panic events
+async function unresolvedPanicEvent(req, res) {
+  try {
+    console.log("getting unresolved panic events...");
+    const unresolvedEvents = await PanicEvent.find({
+      resolved: false,
+    }).populate("userId", "fullName email phone");
+    if (!unresolvedEvents || unresolvedEvents.length === 0) {
+      return sendResponse(res, 200, true, "no unresolved panic events!", []);
+    }
+    return sendResponse(res, 200, true, "success", {
+      message: "Unresolved panic events retrieved successfully.",
+      data: unresolvedEvents,
+    });
+  } catch (error) {
+    console.error("Error getting unresolved panic events:", error);
+    return sendResponse(res, 500, false, "Internal server error!");
+  }
+}
+
 async function getAllPanicEvents(req, res) {
   try {
     console.log("getting all panic events...");
@@ -171,6 +193,22 @@ async function resolvedPanicEvent(req, res) {
     //toggle the resolved status of the panic event,
     //and update the resolvedBy field with the userId of the user who resolved it
 
+    //if student, resolve only their own events
+    if (user.role === "student") {
+      const event = await PanicEvent.findById(eventId);
+      if (!event) {
+        return sendResponse(res, 400, false, "panic event not found!");
+      }
+      if (event.userId.toString() !== user.userId) {
+        return sendResponse(
+          res,
+          403,
+          false,
+          "unauthorized to resolve this panic event!"
+        );
+      }
+    }
+
     const response = await updateResolvedEvents(eventId, user.userId);
     if (!response.success) {
       return sendResponse(res, 400, false, response.message);
@@ -257,4 +295,5 @@ module.exports = {
   updateAcknowledgedContacts,
   getAllPanicEvents,
   getAllPanicByUserId,
+  unresolvedPanicEvent,
 };

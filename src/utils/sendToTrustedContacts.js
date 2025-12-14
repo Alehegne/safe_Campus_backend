@@ -14,9 +14,9 @@ async function sendAlertToTrustedContacts(
   io,
   onlineUsers
 ) {
-  console.log("sending alert to trusted contacts...");
-  console.log("trusted contactsss:",trustedContacts);
+  console.log("Sending alerts to trusted contacts...:", trustedContacts);
   for (const user of trustedContacts) {
+    console.log("Processing trusted contact:", user);
     let registered_contact;
     try {
       registered_contact = await findWithEmail(user.email);
@@ -26,53 +26,51 @@ async function sendAlertToTrustedContacts(
     }
     const role = registered_contact[0]?.role || "trustedContact";
     // if (!registered_contact || registered_contact.length === 0 || registered_contact[0].deviceToken) {
-      if (!user.email) {
-        console.log("No email provided for trusted contact", user.name);
-        continue;
-      }
+    if (!user.email) {
+      console.log("No email provided for trusted contact", user.name);
+      continue;
+    }
 
-      const trackingToken = generateTrackingToken(
-        user.email,
-        userPayLoad.user.panicEventId,
-        role,
-        user.name
-      );
-      const responseTokenYes = generateResponseToken(
-        user.email,
-        userPayLoad.user.panicEventId,
-        "yes",
-        role,
-        user.name
-      );
-      const responseTokenNo = generateResponseToken(
-        user.email,
-        userPayLoad.user.panicEventId,
-        "no",
-        role,
-        user.name
-      );
-      const tokens = {
-        tracking: trackingToken,
-        yes: responseTokenYes,
-        no: responseTokenNo,
-      };
-      console.log("user payload:",userPayLoad);
-      const emailInfo = getTrustedContactAlert(userPayLoad, user.email, tokens);
+    const trackingToken = generateTrackingToken(
+      user.email,
+      userPayLoad.user.panicEventId,
+      role,
+      user.name
+    );
+    const responseTokenYes = generateResponseToken(
+      user.email,
+      userPayLoad.user.panicEventId,
+      "yes",
+      role,
+      user.name
+    );
+    const responseTokenNo = generateResponseToken(
+      user.email,
+      userPayLoad.user.panicEventId,
+      "no",
+      role,
+      user.name
+    );
+    const tokens = {
+      tracking: trackingToken,
+      yes: responseTokenYes,
+      no: responseTokenNo,
+    };
+    const emailInfo = getTrustedContactAlert(userPayLoad, user.email, tokens);
 
-      try {
-        if(isValidEmail(user.email)){
-        console.log("emails sent to:",user);
+    try {
+      if (isValidEmail(user.email)) {
+        console.log("emails sent to:", user);
         await sendEmail(emailInfo);
-        }
-      } catch (error) {
-        console.error("Error sending email:", error);
-        continue;
       }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      continue;
+    }
 
-      // continue;
-   if (registered_contact && registered_contact.length > 0) {
+    // continue;
+    if (registered_contact && registered_contact.length > 0) {
       //FCM or socket.io
-      console.log("sending notifications::")
       // const contactId = registered_contact[0]._id.toString();
       // const socketId = onlineUsers[contactId];
 
@@ -82,9 +80,9 @@ async function sendAlertToTrustedContacts(
       // }
       //send FCM to the contact
       // console.log("send FCM to contact", user.email);
-      console.log(registered_contact);
+      console.log("registered_contact:", registered_contact);
       if (registered_contact[0].deviceToken) {
-        console.log("sending firebase message to :",user)
+        console.log("sending firebase message to :", user);
         sendNotification(
           registered_contact[0].deviceToken,
           "Panic Alert",
@@ -94,6 +92,7 @@ async function sendAlertToTrustedContacts(
       }
     }
   }
+  console.log("Finished sending alerts to trusted contacts.");
 }
 
 module.exports = sendAlertToTrustedContacts;
