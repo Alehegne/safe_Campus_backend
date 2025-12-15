@@ -12,6 +12,7 @@ const {
   getAllPanicEvents,
   getAllPanicByUserId,
   unresolvedPanicEvent,
+  getresolvedPanicEvent,
 } = require("../controllers/sos.controller");
 
 const upload = multer();
@@ -46,6 +47,13 @@ router.get(
   verifyToken,
   allowedRoles("admin", "campus_security"),
   unresolvedPanicEvent
+);
+//get resolved panic events
+router.get(
+  "/resolved",
+  verifyToken,
+  allowedRoles("admin", "campus_security"),
+  getresolvedPanicEvent
 );
 
 //add notified contacts and guards

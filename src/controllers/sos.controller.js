@@ -88,6 +88,25 @@ async function unresolvedPanicEvent(req, res) {
     return sendResponse(res, 500, false, "Internal server error!");
   }
 }
+//get resolved panic events
+async function getresolvedPanicEvent(req, res) {
+  try {
+    console.log("getting resolved panic events...");
+    const resolvedEvents = await PanicEvent.find({
+      resolved: true,
+    }).populate("userId", "fullName email phone");
+    if (!resolvedEvents || resolvedEvents.length === 0) {
+      return sendResponse(res, 204, true, "no resolved panic events!", []);
+    }
+    return sendResponse(res, 200, true, "success", {
+      message: "Resolved panic events retrieved successfully.",
+      data: resolvedEvents,
+    });
+  } catch (error) {
+    console.log("Error getting resolved panic events:", error);
+    return sendResponse(res, 500, false, "Internal server error!");
+  }
+}
 
 async function getAllPanicEvents(req, res) {
   try {
@@ -193,7 +212,6 @@ async function resolvedPanicEvent(req, res) {
     }
     //toggle the resolved status of the panic event,
     //and update the resolvedBy field with the userId of the user who resolved it
-   
 
     //if student, resolve only their own events
     if (user.role === "student") {
@@ -298,4 +316,5 @@ module.exports = {
   getAllPanicEvents,
   getAllPanicByUserId,
   unresolvedPanicEvent,
+  getresolvedPanicEvent,
 };
