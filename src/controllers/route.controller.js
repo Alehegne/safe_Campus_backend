@@ -1,5 +1,63 @@
 const Route = require("../models/route.model");
 const sendResponse = require("../utils/sendResponse");
+const sendEmail = require("../utils/sendEmail");
+const {
+  sendNotificationToUserWithDeviceToken,
+  getEmailInfo,
+} = require("../utils/helper");
+
+async function shareCurrentLocation(req, res) {
+  try {
+    console.log("Sharing current location...");
+    const { user } = req;
+    if (!user) {
+      return sendResponse(res, 401, false, "Unauthorized", null);
+    }
+
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return sendResponse(res, 400, false, "Request body is missing", null);
+    }
+
+    const { coordinates, emails } = req.body;
+
+    if (!coordinates) {
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Location coordinates are required",
+        null
+      );
+    }
+    /*
+     coordinates format: 
+     coordinates = [longitude, latitude]
+    */
+
+    if (!emails || !Array.isArray(emails) || emails.length === 0) {
+      return sendResponse(res, 400, false, "Friend emails are required", null);
+    }
+
+    // Here you would implement the logic to share the current location
+    // with the users identified by the provided emails.
+    // This could involve looking up user IDs by email,
+    // creating temporary route shares, sending notifications, etc.
+
+    const emailInfo = getEmailInfo(user, coordinates);
+    console.log("current userrrr:", user);
+    for (const email of emails) {
+      emailInfo.mailto = email;
+      console.log("Sending email to:", email);
+      await sendEmail(emailInfo);
+      await sendNotificationToUserWithDeviceToken(email);
+    }
+
+    sendResponse(res, 200, true, "Current location shared successfully", null);
+  } catch (error) {
+    console.log("failed to share current location:", error);
+    sendResponse(res, 500, false, "Server error", null, error.message);
+  }
+}
 
 // Start a new route
 async function startRoute(req, res) {
@@ -419,4 +477,5 @@ module.exports = {
   updateRouteDetails,
   pauseRoute,
   getSharedWithMe,
+  shareCurrentLocation,
 };

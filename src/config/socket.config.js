@@ -44,6 +44,13 @@ function initSocket(server) {
         console.log("Online users after removal:", getAllOnlineUsers());
       });
 
+      //check wether the user is online or not
+      socket.on("check_online", (userId, callback) => {
+        const onlineUsers = getAllOnlineUsers();
+        const isOnline = onlineUsers.some((user) => user.userId === userId);
+        callback(isOnline);
+      });
+
       // Handle disconnection
       socket.on("disconnect", (reason) => {
         console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`);

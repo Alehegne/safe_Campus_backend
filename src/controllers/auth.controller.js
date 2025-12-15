@@ -111,7 +111,7 @@ async function addTrustedContacts(req, res) {
     if (!updatedUser) {
       return sendResponse(res, 404, false, "User not found", null);
     }
-    
+
     //send email to the new contact notifying them that they have been added as a trusted contact
     const info = {
       mailto: email,
@@ -243,6 +243,7 @@ async function logInUser(req, res) {
       role: existing[0].role,
       studentId: existing[0].studentId,
       email: existing[0].email,
+      fullName: existing[0].fullName,
     };
     const token = generateJwtToken(payload);
     //generate refresh token

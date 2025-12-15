@@ -10,6 +10,7 @@ const {
   updateRouteDetails,
   pauseRoute,
   getSharedWithMe,
+  shareCurrentLocation,
 } = require("../controllers/route.controller");
 const verifyToken = require("../middleware/verifyToken");
 const multer = require("multer");
@@ -37,5 +38,12 @@ routeRouter.get("/:routeId/status", verifyToken, getRouteStatus);
 // Route sharing endpoints
 routeRouter.post("/:routeId/share", verifyToken, upload.none(), shareRoute);
 routeRouter.get("/:routeId/shared", verifyToken, getSharedRoute);
+//share current location with users using emails
+routeRouter.post(
+  "/share-current-location",
+  upload.none(),
+  verifyToken,
+  shareCurrentLocation
+);
 
 module.exports = routeRouter;

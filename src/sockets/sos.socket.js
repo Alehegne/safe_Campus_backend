@@ -98,7 +98,7 @@ module.exports = function initSosSocket(io) {
         updatedAt: Date.now(),
       });
 
-      // Optional: emit back to panic room (if you still need it)
+      // Optional: emit back to panic room
       ns.to(`panic:${socket.data.panicId}`).emit("location_update", {
         userId,
         location,
