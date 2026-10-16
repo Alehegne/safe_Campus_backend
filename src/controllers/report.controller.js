@@ -30,7 +30,7 @@ async function reportIncident(req, res) {
         false,
         "Incomplete form",
         null,
-        "Please fill in all required fields"
+        "Please fill in all required fields",
       );
     }
 
@@ -38,6 +38,10 @@ async function reportIncident(req, res) {
       parseFloat(location.coordinates[0]),
       parseFloat(location.coordinates[1]),
     ]; // [longitude, latitude]
+    const geoLocation = {
+      type: "Point",
+      coordinates,
+    };
 
     if (
       coordinates.length !== 2 ||
@@ -50,7 +54,7 @@ async function reportIncident(req, res) {
         false,
         "Invalid coordinates",
         null,
-        "Coordinates must be an array of two numbers [longitude, latitude]"
+        "Coordinates must be an array of two numbers [longitude, latitude]",
       );
     }
 
@@ -67,7 +71,7 @@ async function reportIncident(req, res) {
     const image_url = await uploadImage(req.file.mimetype, evidenceImage);
     const incidentData = {
       description,
-      location,
+      location: geoLocation,
       anonymous,
       evidenceImage: image_url,
       tag: tag,
@@ -101,7 +105,7 @@ async function reportIncident(req, res) {
     //   incident.value.evidenceImage = image_url.value;
     //   await incident.value.save();
     // }
-    console.log("incident:", incident.value);
+    console.log("incident:", incident);
 
     // if (!incident) {
     //   return sendResponse(
@@ -144,8 +148,8 @@ async function reportIncident(req, res) {
       200,
       true,
       "Incident reported successfully",
-      incident.value,
-      "Incident reported successfully"
+      incident,
+      "Incident reported successfully",
     );
   } catch (error) {
     console.error("Error reporting incident:", error);
@@ -168,7 +172,7 @@ async function getReportByUser(req, res) {
         false,
         "No reports found",
         null,
-        "No reports found"
+        "No reports found",
       );
     }
     return sendResponse(
@@ -177,7 +181,7 @@ async function getReportByUser(req, res) {
       true,
       "Reports retrieved successfully",
       reports,
-      "Reports retrieved successfully"
+      "Reports retrieved successfully",
     );
   } catch (error) {
     console.log("error in getting user report");
@@ -200,7 +204,7 @@ async function getReports(req, res) {
           analysis,
         };
       },
-      5 * 60 // Cache for 5 minutes
+      5 * 60, // Cache for 5 minutes
     );
     // console.log("keys:", getKeysCache());
     // console.log("values:", getCache(reportCacheKey));
@@ -211,7 +215,7 @@ async function getReports(req, res) {
         false,
         "Error getting reports",
         null,
-        "Error getting reports"
+        "Error getting reports",
       );
     }
     return sendResponse(
@@ -220,7 +224,7 @@ async function getReports(req, res) {
       true,
       "Reports retrieved successfully",
       { reports, analysis },
-      "Reports retrieved successfully"
+      "Reports retrieved successfully",
     );
   } catch (error) {
     console.error("Error getting reports:", error);
@@ -239,7 +243,7 @@ async function deleteReport(req, res) {
         false,
         "Report not found",
         null,
-        "Report not found"
+        "Report not found",
       );
     }
     // Invalidate the cache for the deleted report
@@ -254,7 +258,7 @@ async function deleteReport(req, res) {
       true,
       "Report deleted successfully",
       null,
-      "Report deleted successfully"
+      "Report deleted successfully",
     );
   } catch (error) {
     console.error("Error deleting report:", error);
@@ -272,7 +276,7 @@ async function updateReportStatus(req, res) {
         false,
         "Report ID is required",
         null,
-        "Report ID is required"
+        "Report ID is required",
       );
     }
     if (!req.body || !req.body.status) {
@@ -282,7 +286,7 @@ async function updateReportStatus(req, res) {
         false,
         "Status is required",
         null,
-        "Status is required"
+        "Status is required",
       );
     }
     console.log("req.body.status");
@@ -295,7 +299,7 @@ async function updateReportStatus(req, res) {
         false,
         "Status is required",
         null,
-        "Status is required"
+        "Status is required",
       );
     }
     const updatedReport = await updateStatus(id, status);
@@ -306,7 +310,7 @@ async function updateReportStatus(req, res) {
         false,
         "Report not found",
         null,
-        "Report not found"
+        "Report not found",
       );
     }
     // Invalidate the cache for the updated report
@@ -318,7 +322,7 @@ async function updateReportStatus(req, res) {
       true,
       "Report status updated successfully",
       updatedReport,
-      "Report status updated successfully"
+      "Report status updated successfully",
     );
   } catch (error) {
     console.error("Error updating report status:", error);
@@ -329,17 +333,32 @@ async function updateReportStatus(req, res) {
 async function nearIncidents(req, res) {
   try {
     console.log("getting near incidents...");
-    const [lat, lng] = req.query.near.split(",").map(parseFloat);
-    if (!lat || !lng) {
+    if (!req.query.near) {
       return sendResponse(
         res,
         400,
         false,
         "Coordinates not provided",
         null,
-        "Coordinates not provided"
+        "Coordinates not provided",
       );
     }
+
+    const [latRaw, lngRaw] = String(req.query.near).split(",");
+    const lat = Number.parseFloat(latRaw);
+    const lng = Number.parseFloat(lngRaw);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Coordinates not provided",
+        null,
+        "Coordinates not provided",
+      );
+    }
+
     let timePeriod = req.query.timePeriod || 48 * 60 * 60 * 1000; // default to 48 hours
     timePeriod = new Date(Date.now() - timePeriod);
     const nearInc = await getNearIncidents(lat, lng, timePeriod);
@@ -350,7 +369,7 @@ async function nearIncidents(req, res) {
         false,
         "No recent incidents in 1km radius",
         null,
-        "No recent incidents in 1km radius"
+        "No recent incidents in 1km radius",
       );
     }
     return sendResponse(
@@ -359,7 +378,7 @@ async function nearIncidents(req, res) {
       true,
       "Found incidents in 1km radius",
       nearInc,
-      null
+      null,
     );
   } catch (error) {
     console.log("error in getting near reports");
@@ -378,7 +397,7 @@ async function getReportById(req, res) {
         false,
         "Report ID is required",
         null,
-        "Report ID is required"
+        "Report ID is required",
       );
     }
 
@@ -389,7 +408,7 @@ async function getReportById(req, res) {
         const report = await reportById(id);
         return report;
       },
-      5 * 60 // Cache for 5 minutes
+      5 * 60, // Cache for 5 minutes
     );
 
     if (!report) {
@@ -399,7 +418,7 @@ async function getReportById(req, res) {
         false,
         "Report not found",
         null,
-        "Report not found"
+        "Report not found",
       );
     }
     return sendResponse(
@@ -408,7 +427,7 @@ async function getReportById(req, res) {
       true,
       "Report retrieved successfully",
       report,
-      "Report retrieved successfully"
+      "Report retrieved successfully",
     );
   } catch (error) {
     console.error("Error getting report:", error);

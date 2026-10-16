@@ -2,7 +2,7 @@
 
 The Safe Campus Backend is a robust, Node.js and Express.js based RESTful API and WebSocket server designed to support a campus safety application. It provides essential features to ensure student safety, including real-time panic alerts, incident reporting, route tracking, and danger zone management.
 
-##  Features
+## Features
 
 - **Authentication & Authorization**: Secure JWT-based authentication supporting multiple roles (students, campus security, and administrators).
 - **Trusted Contacts Management**: Users can add, update, and remove trusted contacts who receive notifications during emergencies.
@@ -12,7 +12,7 @@ The Safe Campus Backend is a robust, Node.js and Express.js based RESTful API an
 - **Danger Area Management**: Identifies and alerts users about designated risk zones on campus.
 - **Push Notifications & Emails**: Integrates Firebase Admin for push notifications and Nodemailer for critical email alerts.
 
-##  Technology Stack
+## Technology Stack
 
 - **Runtime**: Node.js
 - **Framework**: Express.js
@@ -24,7 +24,7 @@ The Safe Campus Backend is a robust, Node.js and Express.js based RESTful API an
 - **Validation**: Joi
 - **Security**: Helmet, Express Rate Limit, CORS
 
-##  Folder Structure
+## Folder Structure
 
 ```
 ├── apiDocs/           # Detailed Markdown API documentation
@@ -42,9 +42,10 @@ The Safe Campus Backend is a robust, Node.js and Express.js based RESTful API an
 └── package.json       # Dependencies and scripts
 ```
 
-##  Installation
+## Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/Alehegne/safe_Campus_backend.git
    cd safe_Campus_backend
@@ -55,7 +56,7 @@ The Safe Campus Backend is a robust, Node.js and Express.js based RESTful API an
    npm install
    ```
 
-##  Environment Variables
+## Environment Variables
 
 Create a `.env` file in the root directory and configure the following environment variables. The application relies on these to function properly.
 
@@ -86,31 +87,51 @@ EMAIL_PASS=your_email_password
 FIREBASE_CONFIG_BASE64=your_base64_encoded_firebase_service_account_json
 ```
 
-##  Running the Project
+## Testing
+
+This repository includes a focused Jest test suite that validates real backend contracts for authentication, geospatial reporting, Socket.IO authorization, and panic alert orchestration. The suite is intentionally compact and is designed to prove the behaviors that matter most for production safety workflows.
+
+**Run the full suite locally:**
+
+```bash
+npm test -- --runInBand
+```
+
+**Generate coverage output:**
+
+```bash
+npx jest --runInBand --coverage --coverageReporters=text-summary --coverageReporters=json-summary
+```
+
+GitHub Actions runs the same test command automatically in CI using Node.js 20 and `npm ci`.
+
+## Running the Project
 
 **Development Mode (with auto-reload):**
+
 ```bash
 npm run dev
 ```
 
 **Production Mode:**
+
 ```bash
 npm start
 ```
 
-##  Database Information
+## Database Information
 
-The project uses **MongoDB** as its database, interfaced via **Mongoose**. 
-The connection logic is handled in `src/config/dbConnection.js`. 
+The project uses **MongoDB** as its database, interfaced via **Mongoose**.
+The connection logic is handled in `src/config/dbConnection.js`.
 Key collections include `Users`, `Alerts`, `DangerAreas`, `Incidents`, `PanicEvents`, and `Routes`.
 
-##  Security & Authentication
+## Security & Authentication
 
 - **Strategy**: Authentication is handled via Bearer Tokens (JWT).
 - **Middleware**: Protected routes utilize the `verifyToken` middleware (`src/middleware/verifyToken.js`), which verifies the presence and validity of the JWT in the `Authorization` header.
 - **Roles**: The system supports Role-Based Access Control for `student`, `campus_security`, and `admin`.
 
-##  API Documentation
+## API Documentation
 
 Comprehensive API documentation is available in the `apiDocs/` directory. These Markdown files document the request/response structures, parameters, and endpoints for specific modules:
 
@@ -123,6 +144,7 @@ Comprehensive API documentation is available in the `apiDocs/` directory. These 
 - `websocket-api.md`: Socket.io event references
 
 ### Main API Modules
+
 - `/api/auth` - User login, registration, token refresh, and trusted contacts.
 - `/api/profile` - Profile updates and retrieval.
 - `/api/routes` - Safe route tracking.
@@ -134,6 +156,7 @@ Comprehensive API documentation is available in the `apiDocs/` directory. These 
 - `/api/notification` - Alert notifications.
 
 ### Standard Response Format
+
 The API utilizes a standardized response utility (`src/utils/sendResponse.js`) yielding the following JSON structure:
 
 ```json
@@ -144,16 +167,17 @@ The API utilizes a standardized response utility (`src/utils/sendResponse.js`) y
 }
 ```
 
-##  Error Handling Strategy
+## Error Handling Strategy
 
-The application uses a centralized error-handling strategy in `src/app.js`. 
+The application uses a centralized error-handling strategy in `src/app.js`.
+
 - Unmatched routes fall through to a 404 handler.
 - Application errors are caught and passed to a global error middleware that returns a standardized `500` error payload, including the stack trace if the environment is not set to production.
 
-##  Logging
+## Logging
 
 Logging is implemented globally via `src/middleware/globalLogger.js`. Request details are monitored to aid in debugging and server health checks.
 
-##  License
+## License
 
 ISC License. See `package.json` for details.

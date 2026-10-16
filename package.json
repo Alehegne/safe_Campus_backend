@@ -15,14 +15,15 @@
   "type": "commonjs",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --runInBand",
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "benchmark:geospatial": "node scripts/benchmark-geospatial.js --dataset 1000 --warmup 10 --repetitions 100"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
-    "cloudinary": "^2.8.0",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
@@ -41,5 +42,11 @@
     "nodemailer": "^7.0.11",
     "socket.io": "^4.8.1"
   },
-  "keywords": []
+  "keywords": [],
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.2.0",
+    "socket.io-client": "^4.8.4",
+    "supertest": "^7.0.0"
+  }
 }

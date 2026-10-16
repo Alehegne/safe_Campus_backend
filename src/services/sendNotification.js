@@ -34,7 +34,10 @@ async function sendNotification(deviceToken, title, body, data = {}) {
     console.log("Successfully sent notification via FCM:", response);
     return response;
   } catch (error) {
-    console.error("Error sending notification:", error);
+    console.error("Error sending notification via FCM:", {
+      code: error?.code,
+      message: error?.message,
+    });
     throw error;
   }
 }
