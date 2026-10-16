@@ -12,7 +12,7 @@ async function sendAlertToTrustedContacts(
   trustedContacts = [],
   userPayLoad,
   io,
-  onlineUsers
+  onlineUsers,
 ) {
   console.log("Sending alerts to trusted contacts...:", trustedContacts);
   for (const user of trustedContacts) {
@@ -35,21 +35,21 @@ async function sendAlertToTrustedContacts(
       user.email,
       userPayLoad.user.panicEventId,
       role,
-      user.name
+      user.name,
     );
     const responseTokenYes = generateResponseToken(
       user.email,
       userPayLoad.user.panicEventId,
       "yes",
       role,
-      user.name
+      user.name,
     );
     const responseTokenNo = generateResponseToken(
       user.email,
       userPayLoad.user.panicEventId,
       "no",
       role,
-      user.name
+      user.name,
     );
     const tokens = {
       tracking: trackingToken,
@@ -70,25 +70,24 @@ async function sendAlertToTrustedContacts(
 
     // continue;
     if (registered_contact && registered_contact.length > 0) {
-      //FCM or socket.io
-      // const contactId = registered_contact[0]._id.toString();
-      // const socketId = onlineUsers[contactId];
-
-      // if (socketId) {
-      //   //send socket event to the contact
-      //   io.to(socketId).emit("panicEvent", userPayLoad);
-      // }
-      //send FCM to the contact
-      // console.log("send FCM to contact", user.email);
       console.log("registered_contact:", registered_contact);
       if (registered_contact[0].deviceToken) {
-        console.log("sending firebase message to :", user);
-        sendNotification(
-          registered_contact[0].deviceToken,
-          "Panic Alert",
-          `${userPayLoad.user.fullName} is in danger!`,
-          userPayLoad
-        );
+        try {
+          console.log("sending firebase message to :", user.email);
+          await sendNotification(
+            registered_contact[0].deviceToken,
+            "Panic Alert",
+            `${userPayLoad.user.fullName} is in danger!`,
+            userPayLoad,
+          );
+        } catch (error) {
+          console.error("Push notification failed for trusted contact", {
+            email: user.email,
+            name: user.name,
+            role: registered_contact[0]?.role || "trustedContact",
+            message: error?.message,
+          });
+        }
       }
     }
   }

@@ -6,7 +6,7 @@ async function sendAlertToAdminAndSecurity(
   adminAndGuards,
   userPayLoad,
   io,
-  onlineUsers
+  onlineUsers,
 ) {
   console.log("Sending alerts to admin and security...", adminAndGuards);
   console.log("user payload:", userPayLoad);
@@ -24,23 +24,31 @@ async function sendAlertToAdminAndSecurity(
       io.to(socketId).emit("panicEvent", userPayLoad);
     }
     console.log("Sending alert to admin/security:", user);
-    //send FCM to the contact
     if (user.deviceToken) {
-      sendNotification(
-        user.deviceToken,
-        "Panic Alert",
-        `${userPayLoad.user.fullName} is in danger!`,
-        userPayLoad
-      );
+      try {
+        await sendNotification(
+          user.deviceToken,
+          "Panic Alert",
+          `${userPayLoad.user.fullName} is in danger!`,
+          userPayLoad,
+        );
+      } catch (error) {
+        console.error("Push notification failed for admin/security recipient", {
+          email: user.email,
+          role: user.role || "admin/security",
+          message: error?.message,
+        });
+      }
     }
-    //send email to the contact
 
-    //send email with view link and response link
-
-    const emailInfo = getAdminGuardEmailInfo(userPayLoad, user.email);
-
-    await sendEmail(emailInfo);
-    console.log("Email sent successfully");
+    try {
+      const emailInfo = getAdminGuardEmailInfo(userPayLoad, user.email);
+      await sendEmail(emailInfo);
+      console.log("Email sent successfully");
+    } catch (error) {
+      console.error("Error sending admin/security email:", error);
+      continue;
+    }
   }
 }
 

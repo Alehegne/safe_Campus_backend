@@ -18,7 +18,7 @@ function validateUser(userData) {
           relationShip: Joi.string()
             .valid("friend", "roommate", "colleague", "other")
             .default("friend"),
-        })
+        }),
       )
       .optional(),
     location: Joi.object({
@@ -27,18 +27,19 @@ function validateUser(userData) {
     }).optional(),
     addressDescription: Joi.string().optional(), // like Dorm1, Dorm2, etc.
   });
-  try {
-    userSchema.validate(userData, { abortEarly: false });
-    return {
-      success: true,
-      message: "Validation successful",
-    };
-  } catch (error) {
+  const { error } = userSchema.validate(userData, { abortEarly: false });
+
+  if (error) {
     return {
       success: false,
       message: error.details[0].message,
     };
   }
+
+  return {
+    success: true,
+    message: "Validation successful",
+  };
 }
 
 function validateUpdateUser(userData) {
@@ -56,7 +57,7 @@ function validateUpdateUser(userData) {
           relationShip: Joi.string()
             .valid("friend", "roommate", "colleague", "other")
             .default("friend"),
-        })
+        }),
       )
       .optional(),
     location: Joi.object({
@@ -65,18 +66,19 @@ function validateUpdateUser(userData) {
     }).optional(),
     addressDescription: Joi.string().optional(), // like Dorm1, Dorm2, etc.
   });
-  try {
-    userSchema.validate(userData, { abortEarly: false });
-    return {
-      success: true,
-      message: "Validation successful",
-    };
-  } catch (error) {
+  const { error } = userSchema.validate(userData, { abortEarly: false });
+
+  if (error) {
     return {
       success: false,
       message: error.details[0].message,
     };
   }
+
+  return {
+    success: true,
+    message: "Validation successful",
+  };
 }
 
 module.exports = {
